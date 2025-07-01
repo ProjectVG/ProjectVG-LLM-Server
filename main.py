@@ -1,23 +1,30 @@
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
+import logging
+
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def load_api_key() -> str:
     api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
-        print(f"Successfully loaded OPENAI_API_KEY: {api_key[:4]}****")
+        logging.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
     else:
-        print("OPENAI_API_KEY를 불러오지 못함. .env 파일 또는 환경변수를 확인하세요.")
-        raise ValueError("OPENAI_API_KEY를 불러오지 못함. .env 파일 또는 환경변수를 확인하세요.")
+        raise ValueError("OPENAI_API_KEY를 불러오지 못했습니다.")
 
 
 def load_api_client() -> OpenAI:
-    api_key = load_api_key()
-    client = OpenAI(api_key=api_key)
-    return client
+    try:
+        api_key = load_api_key()
+        client = OpenAI(api_key=api_key)
+        return client
+    except Exception as e:
+        logging.error(f"API 클라이언트 로드 실패: {e}")
+        raise e
 
 
 
