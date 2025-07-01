@@ -28,12 +28,15 @@ def load_api_client() -> OpenAI:
 
 
 
-def chat_with_openai(client, messages, model="gpt-4o-mini", temperature=0.7):
+def chat_with_openai(client, messages, model="gpt-4o-mini", temperature=1.5):
     response = client.responses.create(
         model=model,
         input=messages,
         temperature=temperature
     )
+
+    print(response)
+
     return response.output_text
 
 
@@ -41,9 +44,12 @@ def app():
     client = load_api_client()
 
     system_prompt = {
-        "role": "system",
+        "role": "developer",
         "content": "너는 친구 AI야. 반말로 짧게 말해줘."
     }
+
+    messages = []
+    messages.append(system_prompt)
 
     while True:
         user_input = str(input("You: "))
@@ -53,9 +59,17 @@ def app():
             "content": user_input
         }
 
-        messages = [system_prompt, user_prompt]
+        messages.append(user_prompt)
+
         reply = chat_with_openai(client, messages)
         print("AI:", reply)
+
+        assistant_prompt = {
+            "role": "assistant",
+            "content": reply
+        }
+
+        messages.append(assistant_prompt)
 
 
 if __name__ == "__main__":
