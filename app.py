@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from src.api.routes import router
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -7,18 +8,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.include_router(router)
 
 @app.get("/")
 async def root():
     """루트 엔드포인트"""
     return {"message": "LLM Server API", "status": "running"}
-
-
-@app.get("/hello")
-async def hello():
-    """Hello World 체크용 엔드포인트"""
-    return {"message": "Hello, World!", "status": "success"}
-
 
 if __name__ == "__main__":
     import uvicorn

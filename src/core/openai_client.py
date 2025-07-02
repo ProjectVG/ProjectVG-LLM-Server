@@ -2,10 +2,9 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 from openai.types.responses import Response
-from datetime import datetime
 import logging
 import time
-from src.utils.response_model import ChatResponse
+from src.dto.response_dto import ChatResponse
 
 load_dotenv()
 
@@ -71,8 +70,6 @@ class OpenAIChatClient:
             temperature (float): 온도
             instructions (str): 모델에 대한 지시사항
             previous_messages_id (str | None): 이전 메시지 ID
-
-        # Refrence: https://platform.openai.com/docs/api-reference/responses/create
 
         Returns:
             Response: OpenAI API 응답
