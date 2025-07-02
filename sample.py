@@ -1,7 +1,11 @@
 import logging
 from src.core.openai_client import OpenAIChatClient
-from input import DEFAULT_MEMORY
 
+
+DEFAULT_MEMORY = [
+    "유저는 파이썬이랑 C#을 사용",
+    "나랑 어제 데이트함"
+]
 
 def get_user_input_from_console() -> str:
     """콘솔에서 사용자 Input"""
