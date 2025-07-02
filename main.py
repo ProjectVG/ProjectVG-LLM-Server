@@ -1,5 +1,5 @@
 import logging
-from openai_client import OpenAIChatClient
+from src.client.openai_client import OpenAIChatClient
 from input import DEFAULT_MEMORY
 
 
@@ -14,6 +14,9 @@ def get_memory() -> list[str]:
 
 def app():
     """메인 애플리케이션"""
+
+    print_info = False
+
     try:
         chat_client = OpenAIChatClient()
         print("OpenAI 채팅 클라이언트가 초기화 완료")
@@ -27,7 +30,8 @@ def app():
                 reply, response = chat_client.chat(user_input, memory=memory)
                 print("AI:", reply)
 
-                response.print_response_info()
+                if print_info:
+                    response.print_response_info()
                 
             except Exception as e:
                 logging.error(f"채팅 중 오류 발생: {e}")

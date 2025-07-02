@@ -5,8 +5,7 @@ from openai.types.responses import Response
 from datetime import datetime
 import logging
 import time
-from input import DEFAULT_SYSTEM_PROMPT
-from response_model import ChatResponse
+from src.utils.response_model import ChatResponse
 
 load_dotenv()
 
@@ -19,6 +18,7 @@ class OpenAIChatClient:
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TEMPERATURE = 1.0
     DEFAULT_MAX_TOKENS = 1000
+    DEFAULT_SYSTEM_PROMPT = "너는 친구 AI야. 반말로 짧게 말해줘."
     
     def __init__(self, api_key: str = None, model: str = DEFAULT_MODEL):
         """
@@ -51,7 +51,7 @@ class OpenAIChatClient:
 
         system_prompt = {
             "role": "developer",
-            "content": DEFAULT_SYSTEM_PROMPT + memory_prompt
+            "content": self.DEFAULT_SYSTEM_PROMPT + memory_prompt
         }
 
         return system_prompt
