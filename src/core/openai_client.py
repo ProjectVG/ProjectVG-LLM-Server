@@ -2,13 +2,14 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 from openai.types.responses import Response
-import logging
+from datetime import datetime
 import time
 from src.dto.response_dto import ChatResponse
+from src.utils.logger import get_logger
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = get_logger(__name__)
 
 
 class OpenAIChatClient:
@@ -36,9 +37,10 @@ class OpenAIChatClient:
         """환경변수에서 API 키 로드"""
         api_key = os.getenv("OPENAI_API_KEY")
         if api_key:
-            logging.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
+            logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
             return api_key
         else:
+            logger.error("OPENAI_API_KEY를 불러오지 못했습니다.")
             raise ValueError("OPENAI_API_KEY를 불러오지 못했습니다.")
     
     def _get_system_prompt(self, memory: list[str] = []) -> dict:
@@ -74,6 +76,8 @@ class OpenAIChatClient:
         Returns:
             Response: OpenAI API 응답
         """
+        logger.debug(f"OpenAI API 요청 시작 (temperature: {temperature})")
+        
         response = self.client.responses.create(
             model=self.model,
             input=messages,
@@ -83,6 +87,7 @@ class OpenAIChatClient:
             max_output_tokens=self.DEFAULT_MAX_TOKENS
         )
 
+        logger.debug(f"OpenAI API 응답 완료 (ID: {response.id})")
         return response
     
     def chat(
@@ -102,6 +107,8 @@ class OpenAIChatClient:
         Returns:
             tuple[str, ChatResponse]: 응답 텍스트와 사용자 정의 응답 객체
         """
+        logger.info(f"채팅 요청 처리 시작: {user_input[:50]}...")
+        
         # 요청 시작 시간 기록
         start_time = time.time()
         

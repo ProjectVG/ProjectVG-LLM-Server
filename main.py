@@ -1,5 +1,5 @@
 import logging
-from src.client.openai_client import OpenAIChatClient
+from src.core.openai_client import OpenAIChatClient
 from input import DEFAULT_MEMORY
 
 

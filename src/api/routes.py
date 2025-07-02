@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException
-import logging
-from src.dto import ChatRequest, ChatResponse
+from src.dto.request_dto import ChatRequest
+from src.dto.response_dto import ChatResponse
 from src.core.openai_client import OpenAIChatClient
+from src.utils.logger import get_logger
 from input import DEFAULT_MEMORY
 
 # 로거 설정
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # 라우터 생성
 router = APIRouter(prefix="/api/v1", tags=["chat"])
@@ -28,7 +29,7 @@ async def chat_with_ai(request: ChatRequest):
     try:
         logger.info(f"채팅 요청 받음: {request.message[:50]}...")
         
-        # 메모리 설정
+        # 메모리 설정 (요청에 메모리가 없으면 기본값 사용)
         memory = request.memory if request.memory else DEFAULT_MEMORY
         
         # 채팅 요청
@@ -39,7 +40,6 @@ async def chat_with_ai(request: ChatRequest):
         )
         
         logger.info(f"채팅 응답 완료: {custom_response.response_time:.2f}s")
-        logger.info(f"채팅 응답: {response_text}")
         return custom_response
         
     except Exception as e:
@@ -50,4 +50,5 @@ async def chat_with_ai(request: ChatRequest):
 @router.get("/hello")
 async def hello():
     """Hello World 체크용 엔드포인트"""
+    logger.info("Hello 엔드포인트 접근")    
     return {"message": "Hello, World!", "status": "success"} 
