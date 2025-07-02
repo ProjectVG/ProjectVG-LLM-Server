@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
+from openai.types.responses import Response
+
 import logging
 
 
@@ -28,48 +30,98 @@ def load_api_client() -> OpenAI:
 
 
 
-def chat_with_openai(client, messages, model="gpt-4o-mini", temperature=1.5):
+def chat_with_openai(
+        client: OpenAI,
+        user_input: str,
+        previous_messages_id: str | None = None
+    ) -> tuple[str, Response]:
+    """
+    OpenAI API 요청
+    """
+    system_prompt = get_system_prompt()
+    messages = [system_prompt]
+
+    user_prompt = {
+        "role": "user",
+        "content": user_input
+    }
+
+    messages.append(user_prompt)
+
+    model = "gpt-4o-mini"
+    temperature = 1.5
+
+
+    response = request_to_openai(client, messages, model, temperature, previous_messages_id)
+
+    return response.output_text, response
+
+
+
+def request_to_openai(
+        client: OpenAI,
+        messages: list[dict],
+        model: str = "gpt-4o-mini",
+        temperature: float = 1.5,
+        previous_messages_id: str | None = None
+    ) -> Response:
+    """
+    OpenAI API 요청
+
+    Args:
+        client (OpenAI): OpenAI 클라이언트
+        messages (list[dict]): 메시지 리스트
+        model (str): 모델 이름
+        temperature (float): 온도
+
+    Returns:
+        Response: OpenAI API 응답
+    """
     response = client.responses.create(
         model=model,
         input=messages,
-        temperature=temperature
+        temperature=temperature,
+        previous_response_id=previous_messages_id,
+        max_output_tokens=1000
     )
 
     print(response)
 
-    return response.output_text
+    return response
+
+
+
+def get_user_input_from_console() -> str:
+    """
+    콘솔에서 사용자 Input
+    """
+    user_input = str(input("You: "))
+    return user_input
+
+
+def get_system_prompt() -> str:
+    """
+    시스템 프롬프트를 반환
+    """
+    system_prompt = {
+        "role": "developer",
+        "content": "너는 친구 AI야. 반말로 짧게 말해줘."
+    }
+    return system_prompt
 
 
 def app():
     client = load_api_client()
 
-    system_prompt = {
-        "role": "developer",
-        "content": "너는 친구 AI야. 반말로 짧게 말해줘."
-    }
-
-    messages = []
-    messages.append(system_prompt)
+    previous_messages_id = None
 
     while True:
-        user_input = str(input("You: "))
+        user_input = get_user_input_from_console()
 
-        user_prompt = {
-            "role": "user",
-            "content": user_input
-        }
-
-        messages.append(user_prompt)
-
-        reply = chat_with_openai(client, messages)
+        reply, response = chat_with_openai(client, user_input, previous_messages_id)
         print("AI:", reply)
 
-        assistant_prompt = {
-            "role": "assistant",
-            "content": reply
-        }
-
-        messages.append(assistant_prompt)
+        previous_messages_id = response.id
 
 
 if __name__ == "__main__":
