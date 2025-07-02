@@ -1,13 +1,10 @@
-from dotenv import load_dotenv
-import os
 from openai import OpenAI
 from openai.types.responses import Response
 from datetime import datetime
 import time
 from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
-
-load_dotenv()
+from src.config import config
 
 logger = get_logger(__name__)
 
@@ -20,22 +17,22 @@ class OpenAIChatClient:
     DEFAULT_MAX_TOKENS = 1000
     DEFAULT_SYSTEM_PROMPT = "너는 친구 AI야. 반말로 짧게 말해줘."
     
-    def __init__(self, api_key: str = None, model: str = DEFAULT_MODEL):
+    def __init__(self, api_key: str = None, model: str = None):
         """
         OpenAI 채팅 클라이언트 초기화
         
         Args:
             api_key (str, optional): OpenAI API 키. None이면 환경변수에서 로드
-            model (str, optional): 사용할 모델
+            model (str, optional): 사용할 모델. None이면 환경변수에서 로드
         """
         self.api_key = api_key or self._load_api_key()
         self.client = OpenAI(api_key=self.api_key)
-        self.model = model
+        self.model = model or config.get("OPENAI_MODEL", self.DEFAULT_MODEL)
         self.previous_messages_id = None
         
     def _load_api_key(self) -> str:
         """환경변수에서 API 키 로드"""
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = config.get("OPENAI_API_KEY")
         if api_key:
             logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
             return api_key
