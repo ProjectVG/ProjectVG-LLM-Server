@@ -1,2 +1,4 @@
 openai
-dotenv
+python-dotenv
+fastapi
+uvicorn[standard]
