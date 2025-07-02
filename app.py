@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.api.routes import router
 from src.utils.logger import setup_logging, get_logger
+from src.config import config
 
 # 로깅 설정
 setup_logging()
@@ -20,5 +21,10 @@ logger = get_logger(__name__)
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("서버 시작 중...")
-    uvicorn.run(app, host="0.0.0.0", port=5601) 
+    
+    # 설정에서 포트 가져오기
+    port = config.get_int("SERVER_PORT", 5601)
+    host = config.get("SERVER_HOST", "0.0.0.0")
+    
+    logger.info(f"서버 시작 중... (Host: {host}, Port: {port})")
+    uvicorn.run(app, host=host, port=port) 
