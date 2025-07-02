@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 from openai.types.responses import Response
+from datetime import datetime
 
 import logging
 
@@ -100,13 +101,13 @@ def print_response(response: Response):
     print(f"""
         ==== Open AI Response Information ====
         ID:         {response.id}
-        Created At: {response.created_at}
         Model:      {response.model}
         Token Usage:
             Input Tokens: {response.usage.input_tokens}     Output Tokens: {response.usage.output_tokens}
             Total Tokens: {response.usage.total_tokens}
         Output:
             Format:     {response.text.format.type}
+        Created At: {datetime.fromtimestamp(response.created_at).strftime("%Y-%m-%d %H:%M:%S")}
     """)
 
 
