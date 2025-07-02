@@ -18,13 +18,6 @@ app.include_router(router)
 logger = get_logger(__name__)
 
 
-@app.get("/")
-async def root():
-    """루트 엔드포인트"""
-    logger.info("루트 엔드포인트 접근")
-    return {"message": "LLM Server API", "status": "running"}
-
-
 if __name__ == "__main__":
     import uvicorn
     logger.info("서버 시작 중...")
