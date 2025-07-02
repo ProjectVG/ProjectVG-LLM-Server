@@ -26,6 +26,9 @@ def app():
             try:
                 reply, response = chat_client.chat(user_input, memory=memory)
                 print("AI:", reply)
+
+                response.print_response_info()
+                
             except Exception as e:
                 logging.error(f"채팅 중 오류 발생: {e}")
                 

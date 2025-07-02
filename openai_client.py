@@ -5,6 +5,7 @@ from openai.types.responses import Response
 from datetime import datetime
 import logging
 from input import DEFAULT_SYSTEM_PROMPT
+from response_model import ChatResponse
 
 load_dotenv()
 
@@ -54,22 +55,6 @@ class OpenAIChatClient:
 
         return system_prompt
     
-    def _print_response_info(self, response: Response):
-        """API 응답 정보 출력"""
-        print(f"""
-        ==== Open AI Response Information ====
-        ID:         {response.id}
-        Model:      {response.model}
-        Output:
-            Response:   {response.output_text}
-            Format:     {response.text.format.type}
-        Token Usage:
-            Input Tokens: {response.usage.input_tokens}     Output Tokens: {response.usage.output_tokens}
-            Total Tokens: {response.usage.total_tokens}
-
-        Created At: {datetime.fromtimestamp(response.created_at).strftime("%Y-%m-%d %H:%M:%S")}
-    """)
-    
     def _request_to_openai(
         self,
         messages: list[dict],
@@ -98,15 +83,14 @@ class OpenAIChatClient:
             max_output_tokens=self.DEFAULT_MAX_TOKENS
         )
 
-        self._print_response_info(response)
         return response
-    
+       
     def chat(
         self,
         user_input: str,
         instructions: str = "",
         memory: list[str] = [],
-    ) -> tuple[str, Response]:
+    ) -> tuple[str, ChatResponse]:
         """
         사용자 입력에 대한 채팅 응답 생성
         
@@ -116,23 +100,25 @@ class OpenAIChatClient:
             memory (list[str]): 이전 대화 기억
             
         Returns:
-            tuple[str, Response]: 응답 텍스트와 응답 객체
+            tuple[str, ChatResponse]: 응답 텍스트와 사용자 정의 응답 객체
         """
         system_prompt = self._get_system_prompt(memory)
-        messages = [system_prompt]
+        user_prompt = {"role": "user", "content": user_input}
+
+        messages = [system_prompt, user_prompt]
         
-        user_prompt = {
-            "role": "user",
-            "content": user_input
-        }
-        messages.append(user_prompt)
-        
-        response = self._request_to_openai(
+        # OpenAI API 요청
+        openai_response = self._request_to_openai(
             messages=messages,
             instructions=instructions,
             previous_messages_id=self.previous_messages_id
         )
+
+        # 이전 메시지 ID 업데이트
+        self.previous_messages_id = openai_response.id
         
-        self.previous_messages_id = response.id
+        # 응답 결과
+        response_text = openai_response.output_text
+        response = ChatResponse.from_openai_response(openai_response=openai_response)
         
-        return response.output_text, response 
+        return response_text, response 
