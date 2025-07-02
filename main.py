@@ -49,7 +49,7 @@ def chat_with_openai(
     messages.append(user_prompt)
 
     model = "gpt-4o-mini"
-    temperature = 1.5
+    temperature = 1.0
 
 
     response = request_to_openai(client, messages, model, temperature, previous_messages_id)
@@ -62,7 +62,8 @@ def request_to_openai(
         client: OpenAI,
         messages: list[dict],
         model: str = "gpt-4o-mini",
-        temperature: float = 1.5,
+        temperature: float = 1.0,
+        instructions: str = "",
         previous_messages_id: str | None = None
     ) -> Response:
     """
@@ -73,6 +74,10 @@ def request_to_openai(
         messages (list[dict]): 메시지 리스트
         model (str): 모델 이름
         temperature (float): 온도
+        instructions (str): 모델에 대한 지시사항
+        previous_messages_id (str | None): 이전 메시지 ID
+
+    ## Refrence: https://platform.openai.com/docs/api-reference/responses/create
 
     Returns:
         Response: OpenAI API 응답
@@ -80,14 +85,29 @@ def request_to_openai(
     response = client.responses.create(
         model=model,
         input=messages,
+        instructions=instructions,
         temperature=temperature,
         previous_response_id=previous_messages_id,
         max_output_tokens=1000
     )
 
-    print(response)
+    print_response(response)
 
     return response
+
+
+def print_response(response: Response):
+    print(f"""
+        ==== Open AI Response Information ====
+        ID:         {response.id}
+        Created At: {response.created_at}
+        Model:      {response.model}
+        Token Usage:
+            Input Tokens: {response.usage.input_tokens}     Output Tokens: {response.usage.output_tokens}
+            Total Tokens: {response.usage.total_tokens}
+        Output:
+            Format:     {response.text.format.type}
+    """)
 
 
 
