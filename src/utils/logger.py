@@ -1,6 +1,8 @@
 import logging
 import sys
+import os
 from typing import Optional
+from src.config import config
 
 
 class LoggerConfig:
@@ -37,6 +39,11 @@ class LoggerConfig:
         
         # 파일 핸들러 (선택사항)
         if self.log_file:
+            # 로그 파일 디렉토리 생성
+            log_dir = os.path.dirname(self.log_file)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            
             file_handler = logging.FileHandler(self.log_file, encoding='utf-8')
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
@@ -48,13 +55,29 @@ class LoggerConfig:
 
 
 def setup_logging(
-    level: int = logging.INFO,
+    level: int = None,
     format_string: str = "%(asctime)s %(levelname)s [%(name)s] %(message)s",
     log_file: Optional[str] = None
 ):
     """로깅 설정"""
-    config = LoggerConfig(level, format_string, log_file)
-    config.configure()
+    # 설정에서 로그 레벨 가져오기
+    if level is None:
+        log_level_str = config.get("LOG_LEVEL", "INFO").upper()
+        level_map = {
+            "DEBUG": logging.DEBUG,
+            "INFO": logging.INFO,
+            "WARNING": logging.WARNING,
+            "ERROR": logging.ERROR,
+            "CRITICAL": logging.CRITICAL
+        }
+        level = level_map.get(log_level_str, logging.INFO)
+    
+    # 설정에서 로그 파일 경로 가져오기
+    if log_file is None:
+        log_file = config.get("LOG_FILE")
+    
+    logger_config = LoggerConfig(level, format_string, log_file)
+    logger_config.configure()
 
 
 def get_logger(name: str = None) -> logging.Logger:
