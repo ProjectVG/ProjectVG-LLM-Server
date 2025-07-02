@@ -4,6 +4,7 @@ from openai import OpenAI
 from openai.types.responses import Response
 from datetime import datetime
 import logging
+import time
 from input import DEFAULT_SYSTEM_PROMPT
 from response_model import ChatResponse
 
@@ -71,6 +72,8 @@ class OpenAIChatClient:
             instructions (str): 모델에 대한 지시사항
             previous_messages_id (str | None): 이전 메시지 ID
 
+        # Refrence: https://platform.openai.com/docs/api-reference/responses/create
+
         Returns:
             Response: OpenAI API 응답
         """
@@ -84,7 +87,7 @@ class OpenAIChatClient:
         )
 
         return response
-       
+    
     def chat(
         self,
         user_input: str,
@@ -102,6 +105,9 @@ class OpenAIChatClient:
         Returns:
             tuple[str, ChatResponse]: 응답 텍스트와 사용자 정의 응답 객체
         """
+        # 요청 시작 시간 기록
+        start_time = time.time()
+        
         system_prompt = self._get_system_prompt(memory)
         user_prompt = {"role": "user", "content": user_input}
 
@@ -114,11 +120,17 @@ class OpenAIChatClient:
             previous_messages_id=self.previous_messages_id
         )
 
+        # 응답 시간 계산
+        response_time = time.time() - start_time
+
         # 이전 메시지 ID 업데이트
         self.previous_messages_id = openai_response.id
         
         # 응답 결과
         response_text = openai_response.output_text
-        response = ChatResponse.from_openai_response(openai_response=openai_response)
+        response = ChatResponse.from_openai_response(
+            openai_response=openai_response,
+            response_time=response_time
+        )
         
         return response_text, response 

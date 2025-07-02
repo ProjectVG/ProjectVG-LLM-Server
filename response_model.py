@@ -1,6 +1,7 @@
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional
+import time
 
 
 @dataclass
@@ -20,13 +21,15 @@ class ChatResponse:
     # 출력 형식
     output_format: str
     
-    
     # 생성 시간
     created_at: datetime
     
     # 추가 메타데이터
     temperature: Optional[float] = None
     instructions: Optional[str] = None
+    
+    # 응답 시간 (초)
+    response_time: Optional[float] = None
     
     def print_response_info(self):
         """응답 정보 출력"""
@@ -40,6 +43,7 @@ Output:
 Token Usage:
     Input Tokens: {self.input_tokens}     Output Tokens: {self.output_tokens}
     Total Tokens: {self.total_tokens}
+Response Time: {self.response_time:.2f}s
 Created At: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")}
         """)
     
@@ -55,11 +59,12 @@ Created At: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")}
             "output_format": self.output_format,
             "created_at": self.created_at.isoformat(),
             "temperature": self.temperature,
-            "instructions": self.instructions
+            "instructions": self.instructions,
+            "response_time": self.response_time
         }
     
     @classmethod
-    def from_openai_response(cls, openai_response):
+    def from_openai_response(cls, openai_response, response_time: float = None):
         """OpenAI Response에서 ChatResponse 생성"""
         return cls(
             response_text=openai_response.output_text,
@@ -70,5 +75,6 @@ Created At: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")}
             total_tokens=openai_response.usage.total_tokens,
             output_format=openai_response.text.format.type,
             created_at=datetime.fromtimestamp(openai_response.created_at),
-            temperature=openai_response.temperature
+            temperature=openai_response.temperature,
+            response_time=response_time
         ) 
