@@ -17,6 +17,7 @@ class OpenAIChatClient:
     DEFAULT_TEMPERATURE = 1.0
     DEFAULT_MAX_TOKENS = 1000
     DEFAULT_SYSTEM_PROMPT = "너는 친구 AI야. 반말로 짧게 말해줘."
+    MAX_HISTORY_LENGTH = 10  # 최대 대화 히스토리 길이
     
     def __init__(self, api_key: str = None, model: str = None):
         """
@@ -29,7 +30,6 @@ class OpenAIChatClient:
         self.api_key = api_key or self._load_api_key()
         self.client = OpenAI(api_key=self.api_key)
         self.model = model or config.get("OPENAI_MODEL", self.DEFAULT_MODEL)
-        self.previous_messages_id = None
         
     def _load_api_key(self) -> str:
         """환경변수에서 API 키 로드"""
@@ -48,12 +48,29 @@ class OpenAIChatClient:
             "content": system_prompt.get_system_prompt_form()
         }
     
+    def _get_history(self, history: list[str]) -> list[dict]:
+        """history 포맷팅: '역할:내용' -> {role: ..., content: ...}"""
+        formatted_history = []
+        if history:
+            for item in history:
+                if ":" in item:
+                    role, content = item.split(":", 1)
+                    role = role.strip().lower()
+                    if role in ["user", "assistant"]:
+                        formatted_history.append({"role": role, "content": content.strip()})
+        
+        # 최대 대화 히스토리 길이 제한
+        if len(formatted_history) > self.MAX_HISTORY_LENGTH * 2:
+            formatted_history = formatted_history[-self.MAX_HISTORY_LENGTH * 2:]
+
+        return formatted_history
+
+
     def _request_to_openai(
         self,
         messages: list[dict],
         temperature: float = DEFAULT_TEMPERATURE,
-        instructions: str = "",
-        previous_messages_id: str | None = None
+        instructions: str = ""
     ) -> Response:
         """
         OpenAI API 요청
@@ -62,7 +79,6 @@ class OpenAIChatClient:
             messages (list[dict]): 메시지 리스트
             temperature (float): 온도
             instructions (str): 모델에 대한 지시사항
-            previous_messages_id (str | None): 이전 메시지 ID
 
         Returns:
             Response: OpenAI API 응답
@@ -74,7 +90,6 @@ class OpenAIChatClient:
             input=messages,
             instructions=instructions,
             temperature=temperature,
-            previous_response_id=previous_messages_id,
             max_output_tokens=self.DEFAULT_MAX_TOKENS
         )
 
@@ -87,6 +102,7 @@ class OpenAIChatClient:
         system_prompt: SystemPrompt = None,
         instructions: str = "",
         memory: list[str] = [],
+        history: list[str] = None,
     ) -> tuple[str, ChatResponse]:
         """
         사용자 입력에 대한 채팅 응답 생성
@@ -96,6 +112,7 @@ class OpenAIChatClient:
             system_prompt (SystemPrompt, optional): 시스템 프롬프트 객체
             instructions (str): 추가 지시사항
             memory (list[str]): 이전 대화 기억
+            history (list[str]): '역할:내용' 형태의 대화 기록
             
         Returns:
             tuple[str, ChatResponse]: 응답 텍스트와 사용자 정의 응답 객체
@@ -109,23 +126,25 @@ class OpenAIChatClient:
         if system_prompt is None:
             system_prompt = SystemPrompt(memory=memory)
         
-        system_prompt_dict = self._get_system_prompt(system_prompt)
+        #시스템 스폼포트
+        system_prompt = self._get_system_prompt(system_prompt)
+        
+        #대화 히스토리
+        conversation_history = self._get_history(history)
+        
+        #사용자 입력
         user_prompt = {"role": "user", "content": user_input}
 
-        messages = [system_prompt_dict, user_prompt]
+        messages = [system_prompt] + conversation_history + [user_prompt]
         
         # OpenAI API 요청
         openai_response = self._request_to_openai(
             messages=messages,
-            instructions=instructions,
-            previous_messages_id=self.previous_messages_id
+            instructions=instructions
         )
 
         # 응답 시간 계산
         response_time = time.time() - start_time
-
-        # 이전 메시지 ID 업데이트
-        self.previous_messages_id = openai_response.id
         
         # 응답 결과
         response_text = openai_response.output_text

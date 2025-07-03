@@ -21,6 +21,7 @@ def app():
     """메인 애플리케이션"""
 
     print_info = True
+    history = []  # 대화 히스토리 (역할:내용 문자열 리스트)
 
     try:
         chat_client = OpenAIChatClient()
@@ -39,11 +40,18 @@ def app():
             )
             
             try:
-                reply, response = chat_client.chat(user_input, system_prompt=system_prompt)
+                reply, response = chat_client.chat(
+                    user_input,
+                    system_prompt=system_prompt,
+                    history=history
+                )
                 print("AI:", reply)
 
                 if print_info:
                     response.print_response_info()
+                # history에 user/assistant 대화 추가
+                history.append(f"user:{user_input}")
+                history.append(f"assistant:{reply}")
                 
             except Exception as e:
                 logging.error(f"채팅 중 오류 발생: {e}")
