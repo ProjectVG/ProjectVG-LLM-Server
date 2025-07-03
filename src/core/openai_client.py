@@ -5,6 +5,7 @@ import time
 from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
 from src.config import config
+from src.core.system_prompt import SystemPrompt
 
 logger = get_logger(__name__)
 
@@ -40,19 +41,12 @@ class OpenAIChatClient:
             logger.error("OPENAI_API_KEY를 불러오지 못했습니다.")
             raise ValueError("OPENAI_API_KEY를 불러오지 못했습니다.")
     
-    def _get_system_prompt(self, memory: list[str] = []) -> dict:
+    def _get_system_prompt(self, system_prompt: SystemPrompt) -> dict:
         """시스템 프롬프트 반환"""
-        if memory:
-            memory_prompt = "\nmemory: " + "\n".join(memory)
-        else:
-            memory_prompt = ""
-
-        system_prompt = {
-            "role": "developer",
-            "content": self.DEFAULT_SYSTEM_PROMPT + memory_prompt
+        return {
+            "role": "system",
+            "content": system_prompt.get_system_prompt_form()
         }
-
-        return system_prompt
     
     def _request_to_openai(
         self,
@@ -90,6 +84,7 @@ class OpenAIChatClient:
     def chat(
         self,
         user_input: str,
+        system_prompt: SystemPrompt = None,
         instructions: str = "",
         memory: list[str] = [],
     ) -> tuple[str, ChatResponse]:
@@ -98,6 +93,7 @@ class OpenAIChatClient:
         
         Args:
             user_input (str): 사용자 입력
+            system_prompt (SystemPrompt, optional): 시스템 프롬프트 객체
             instructions (str): 추가 지시사항
             memory (list[str]): 이전 대화 기억
             
@@ -109,10 +105,14 @@ class OpenAIChatClient:
         # 요청 시작 시간 기록
         start_time = time.time()
         
-        system_prompt = self._get_system_prompt(memory)
+        # SystemPrompt 객체 생성 또는 사용
+        if system_prompt is None:
+            system_prompt = SystemPrompt(memory=memory)
+        
+        system_prompt_dict = self._get_system_prompt(system_prompt)
         user_prompt = {"role": "user", "content": user_input}
 
-        messages = [system_prompt, user_prompt]
+        messages = [system_prompt_dict, user_prompt]
         
         # OpenAI API 요청
         openai_response = self._request_to_openai(

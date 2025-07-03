@@ -1,5 +1,6 @@
 import logging
 from src.core.openai_client import OpenAIChatClient
+from src.core.system_prompt import SystemPrompt
 
 
 DEFAULT_MEMORY = [
@@ -19,7 +20,7 @@ def get_memory() -> list[str]:
 def app():
     """메인 애플리케이션"""
 
-    print_info = False
+    print_info = True
 
     try:
         chat_client = OpenAIChatClient()
@@ -30,8 +31,15 @@ def app():
             user_input = get_user_input_from_console()
             memory = get_memory()
             
+            # SystemPrompt 객체 생성
+            system_prompt = SystemPrompt(
+                memory=memory,
+                current_situation="대화 중",
+                custom_instructions=""
+            )
+            
             try:
-                reply, response = chat_client.chat(user_input, memory=memory)
+                reply, response = chat_client.chat(user_input, system_prompt=system_prompt)
                 print("AI:", reply)
 
                 if print_info:
