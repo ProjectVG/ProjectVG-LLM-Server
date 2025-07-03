@@ -1,0 +1,12 @@
+
+services:
+  llm-server:
+    build: .
+    container_name: llm-server
+    ports:
+      - "5601:5601"
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    restart: unless-stopped 
