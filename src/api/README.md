@@ -18,10 +18,14 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 
 ```json
 {
-  "message": "string",
-  "memory": ["string"],
-  "instructions": "string",
-  "history": ["string"]
+  "session_id": "string",
+  "system_message": "string",
+  "user_message": "string",
+  "conversation_history": ["string"],
+  "memory_context": ["string"],
+  "max_tokens": 1000,
+  "temperature": 0.7,
+  "model": "gpt-4o-mini"
 }
 ```
 
@@ -29,14 +33,18 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 
 | 필드 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
-| `message` | string | O | - | 사용자 입력 메시지 |
-| `memory` | string[] | X | [] | AI가 기억할 정보 목록 |
-| `instructions` | string | X | "" | 추가 지시사항 |
-| `history` | string[] | X | [] | 대화 히스토리 (형식: "role:content") |
+| `session_id` | string | O | - | 세션 ID |
+| `system_message` | string | X | "" | 추가 시스템 프롬프트 메시지 |
+| `user_message` | string | O | - | 사용자 입력 메시지 |
+| `conversation_history` | string[] | X | [] | 최근 대화 내역 |
+| `memory_context` | string[] | X | [] | 장기 기억 Context |
+| `max_tokens` | int | X | 1000 | 최대 토큰 수 |
+| `temperature` | float | X | 0.7 | 생성 온도 |
+| `model` | string | X | "gpt-4o-mini" | 사용할 모델 |
 
-#### history 필드 형식
+#### conversation_history 필드 형식
 
-history 배열의 각 항목은 `"role:content"` 형태의 문자열입니다.
+conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자열입니다.
 
 - `role`: "user" 또는 "assistant"
 - `content`: 실제 대화 내용
@@ -87,6 +95,7 @@ history 배열의 각 항목은 `"role:content"` 형태의 문자열입니다.
 #### HTTP 상태 코드
 
 - `200 OK`: 성공적인 응답
+- `422 Unprocessable Entity`: 요청 데이터 형식 오류
 - `500 Internal Server Error`: 서버 내부 오류
 
 #### 사용 예시
@@ -95,13 +104,17 @@ history 배열의 각 항목은 `"role:content"` 형태의 문자열입니다.
 curl -X POST "http://localhost:5601/api/v1/chat" \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "안녕하세요!",
-    "memory": ["사용자는 프로그래밍을 좋아함"],
-    "instructions": "친근하게 대화해주세요",
-    "history": [
+    "session_id": "session_123",
+    "system_message": "친근하게 대화해주세요",
+    "user_message": "안녕하세요!",
+    "memory_context": ["사용자는 프로그래밍을 좋아함"],
+    "conversation_history": [
       "user:안녕하세요",
       "assistant:안녕하세요! 무엇을 도와드릴까요?"
-    ]
+    ],
+    "max_tokens": 1000,
+    "temperature": 0.7,
+    "model": "gpt-4o-mini"
   }'
 ```
 
@@ -143,9 +156,9 @@ API는 표준 HTTP 상태 코드를 사용하며, 오류 발생 시 다음과 �
 
 ## 주의사항
 
-1. **토큰 제한**: OpenAI API의 토큰 제한을 고려하여 history 길이를 적절히 관리하세요.
-2. **메모리 관리**: memory 배열이 너무 길면 시스템 프롬프트가 복잡해질 수 있습니다.
-3. **히스토리 형식**: history 배열의 각 항목은 반드시 "role:content" 형식을 지켜야 합니다.
+1. **토큰 제한**: OpenAI API의 토큰 제한을 고려하여 conversation_history 길이를 적절히 관리하세요.
+2. **메모리 관리**: memory_context 배열이 너무 길면 시스템 프롬프트가 복잡해질 수 있습니다.
+3. **히스토리 형식**: conversation_history 배열의 각 항목은 반드시 "role:content" 형식을 지켜야 합니다.
 
 ## 구현 예시
 
@@ -154,12 +167,17 @@ API는 표준 HTTP 상태 코드를 사용하며, 오류 발생 시 다음과 �
 ```javascript
 const axios = require('axios');
 
-async function chatWithAI(message, history = []) {
+async function chatWithAI(sessionId, userMessage, history = [], memory = []) {
   try {
     const response = await axios.post('http://localhost:5601/api/v1/chat', {
-      message: message,
-      memory: ['사용자는 개발자입니다'],
-      history: history
+      session_id: sessionId,
+      system_message: '친근하게 대화해주세요',
+      user_message: userMessage,
+      conversation_history: history,
+      memory_context: memory,
+      max_tokens: 1000,
+      temperature: 0.7,
+      model: 'gpt-4o-mini'
     });
     
     return response.data;
@@ -170,12 +188,14 @@ async function chatWithAI(message, history = []) {
 }
 
 // 사용 예시
+const sessionId = 'session_123';
 const history = [
   'user:안녕하세요',
   'assistant:안녕하세요! 무엇을 도와드릴까요?'
 ];
+const memory = ['사용자는 개발자입니다'];
 
-chatWithAI('파이썬에 대해 알려주세요', history)
+chatWithAI(sessionId, '파이썬에 대해 알려주세요', history, memory)
   .then(response => {
     console.log('AI Response:', response.response_text);
   });
@@ -186,14 +206,21 @@ chatWithAI('파이썬에 대해 알려주세요', history)
 ```python
 import requests
 
-def chat_with_ai(message, history=None):
+def chat_with_ai(session_id, user_message, history=None, memory=None):
     if history is None:
         history = []
+    if memory is None:
+        memory = []
     
     payload = {
-        'message': message,
-        'memory': ['사용자는 개발자입니다'],
-        'history': history
+        'session_id': session_id,
+        'system_message': '친근하게 대화해주세요',
+        'user_message': user_message,
+        'conversation_history': history,
+        'memory_context': memory,
+        'max_tokens': 1000,
+        'temperature': 0.7,
+        'model': 'gpt-4o-mini'
     }
     
     response = requests.post('http://localhost:5601/api/v1/chat', json=payload)
@@ -202,11 +229,13 @@ def chat_with_ai(message, history=None):
     return response.json()
 
 # 사용 예시
+session_id = 'session_123'
 history = [
     'user:안녕하세요',
     'assistant:안녕하세요! 무엇을 도와드릴까요?'
 ]
+memory = ['사용자는 개발자입니다']
 
-result = chat_with_ai('파이썬에 대해 알려주세요', history)
+result = chat_with_ai(session_id, '파이썬에 대해 알려주세요', history, memory)
 print('AI Response:', result['response_text'])
 ``` 

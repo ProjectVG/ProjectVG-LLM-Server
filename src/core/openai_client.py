@@ -103,6 +103,7 @@ class OpenAIChatClient:
         instructions: str = "",
         memory: list[str] = [],
         history: list[str] = None,
+        session_id: str = "",
     ) -> tuple[str, ChatResponse]:
         """
         사용자 입력에 대한 채팅 응답 생성
@@ -113,6 +114,7 @@ class OpenAIChatClient:
             instructions (str): 추가 지시사항
             memory (list[str]): 이전 대화 기억
             history (list[str]): '역할:내용' 형태의 대화 기록
+            session_id (str): 세션 ID
             
         Returns:
             tuple[str, ChatResponse]: 응답 텍스트와 사용자 정의 응답 객체
@@ -150,6 +152,7 @@ class OpenAIChatClient:
         response_text = openai_response.output_text
         response = ChatResponse.from_openai_response(
             openai_response=openai_response,
+            session_id=session_id,
             response_time=response_time
         )
         

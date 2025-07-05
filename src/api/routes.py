@@ -28,30 +28,46 @@ async def chat_with_ai(request: ChatRequest):
         ChatResponse: AI 응답 데이터
     """
     try:
-        logger.info(f"채팅 요청 받음: {request.message[:50]}...")
+        # 필수 필드 검증
+        if not request.user_message or request.user_message.strip() == "":
+            error_response = ChatResponse.create_error_response(
+                session_id=request.session_id or "",
+                error_message="user_message는 필수 필드입니다."
+            )
+            return error_response
+        
+        logger.info(f"채팅 요청 받음: {request.user_message[:50]}...")
         
         # 메모리 설정 (요청에 메모리가 없으면 기본값 사용)
-        memory = request.memory if request.memory else DEFAULT_MEMORY
+        memory = request.memory_context if request.memory_context else DEFAULT_MEMORY
         
         # SystemPrompt 객체 생성
         system_prompt = SystemPrompt(
             memory=memory,
-            current_situation=request.instructions,
-            custom_instructions=request.instructions
+            current_situation=request.system_message or "",
+            custom_instructions=request.system_message or ""
         )
         
         response_text, custom_response = chat_client.chat(
-            user_input=request.message,
+            user_input=request.user_message,
             system_prompt=system_prompt,
-            instructions=request.instructions
+            instructions=request.system_message or "",
+            history=request.conversation_history or [],
+            session_id=request.session_id or ""
         )
         
         logger.info(f"채팅 응답 완료: {custom_response.response_time:.2f}s")
         return custom_response
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"채팅 중 오류 발생: {e}")
-        raise HTTPException(status_code=500, detail=f"채팅 처리 중 오류: {str(e)}")
+        error_response = ChatResponse.create_error_response(
+            session_id=request.session_id or "",
+            error_message=f"채팅 처리 중 오류: {str(e)}"
+        )
+        return error_response
 
 
 @router.get("/hello")
