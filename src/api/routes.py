@@ -39,26 +39,27 @@ async def chat_with_ai(request: ChatRequest):
         
         logger.info(f"채팅 요청 받음: {request.user_message[:50]}...")
         
-        # 메모리 설정 (요청에 메모리가 없으면 기본값 사용)
-        memory = request.memory_context if request.memory_context else DEFAULT_MEMORY
-        
-        # SystemPrompt 객체 생성
-        system_prompt = SystemPrompt(
-            memory=memory,
-            current_situation=request.system_message or "",
-            custom_instructions=request.system_message or ""
+        openai_response, response_time = chat_client.chat(
+            session_id=request.session_id,
+            model=request.model,
+            system_prompt=request.system_message,
+            user_prompt=request.user_message,
+            history=request.conversation_history,
+            memory=request.memory_context,
+            instructions=request.system_message,
+            max_tokens=request.max_tokens,
+            temperature=request.temperature
+        )
+
+        # 응답 결과
+        response = ChatResponse.from_openai_response(
+            openai_response=openai_response,
+            session_id=request.session_id,
+            response_time=response_time
         )
         
-        response_text, custom_response = chat_client.chat(
-            user_input=request.user_message,
-            system_prompt=system_prompt,
-            instructions=request.system_message or "",
-            history=request.conversation_history or [],
-            session_id=request.session_id or ""
-        )
-        
-        logger.info(f"채팅 응답 완료: {custom_response.response_time:.2f}s")
-        return custom_response
+        logger.info(f"채팅 응답 완료: {response.response_time:.2f}s")
+        return response
         
     except HTTPException:
         raise
