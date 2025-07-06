@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from src.api.routes import router
+from src.api.system_routes import system_router
 from src.utils.logger import setup_logging, get_logger
 from src.config import config
 
@@ -15,6 +16,7 @@ app = FastAPI(
 
 # 라우터 등록
 app.include_router(router)
+app.include_router(system_router)
 
 logger = get_logger(__name__)
 

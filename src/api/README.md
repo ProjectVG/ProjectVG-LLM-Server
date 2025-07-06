@@ -62,17 +62,19 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 
 ```json
 {
+  "session_id": "string",
   "response_text": "string",
-  "response_id": "string",
   "model": "string",
   "input_tokens": 0,
   "output_tokens": 0,
-  "total_tokens": 0,
+  "total_tokens_used": 0,
   "output_format": "string",
   "created_at": "2024-01-01T00:00:00",
   "temperature": 0.0,
   "instructions": "string",
-  "response_time": 0.0
+  "response_time": 0.0,
+  "success": true,
+  "error_message": null
 }
 ```
 
@@ -80,56 +82,25 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
+| `session_id` | string | 세션 ID |
 | `response_text` | string | AI 응답 텍스트 |
-| `response_id` | string | OpenAI 응답 ID |
 | `model` | string | 사용된 OpenAI 모델명 |
 | `input_tokens` | int | 입력 토큰 수 |
 | `output_tokens` | int | 출력 토큰 수 |
-| `total_tokens` | int | 총 토큰 수 |
+| `total_tokens_used` | int | 총 토큰 수 |
 | `output_format` | string | 출력 형식 |
 | `created_at` | string | 응답 생성 시간 (ISO 8601) |
 | `temperature` | float | 사용된 temperature 값 |
 | `instructions` | string | 전달된 지시사항 |
 | `response_time` | float | 응답 처리 시간 (초) |
+| `success` | bool | 성공 여부 |
+| `error_message` | string | 오류 메시지 (실패 시) |
 
 #### HTTP 상태 코드
 
 - `200 OK`: 성공적인 응답
 - `422 Unprocessable Entity`: 요청 데이터 형식 오류
 - `500 Internal Server Error`: 서버 내부 오류
-
-#### 사용 예시
-
-```bash
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "session_id": "session_123",
-    "system_message": "친근하게 대화해주세요",
-    "user_message": "안녕하세요!",
-    "memory_context": ["사용자는 프로그래밍을 좋아함"],
-    "conversation_history": [
-      "user:안녕하세요",
-      "assistant:안녕하세요! 무엇을 도와드릴까요?"
-    ],
-    "max_tokens": 1000,
-    "temperature": 0.7,
-    "model": "gpt-4o-mini"
-  }'
-```
-
-### GET /api/v1/hello
-
-서버 상태 확인용 엔드포인트입니다.
-
-#### Response
-
-```json
-{
-  "message": "Hello, World!",
-  "status": "success"
-}
-```
 
 ### GET /
 
@@ -160,7 +131,7 @@ API는 표준 HTTP 상태 코드를 사용하며, 오류 발생 시 다음과 �
 2. **메모리 관리**: memory_context 배열이 너무 길면 시스템 프롬프트가 복잡해질 수 있습니다.
 3. **히스토리 형식**: conversation_history 배열의 각 항목은 반드시 "role:content" 형식을 지켜야 합니다.
 
-## 구현 예시
+## 사용 예시
 
 ### JavaScript (Node.js)
 
@@ -238,4 +209,8 @@ memory = ['사용자는 개발자입니다']
 
 result = chat_with_ai(session_id, '파이썬에 대해 알려주세요', history, memory)
 print('AI Response:', result['response_text'])
-``` 
+```
+
+## 관련 문서
+
+- **시스템 모니터링 API**: [SYSTEM_API_README.md](SYSTEM_API_README.md) - 시스템 정보 및 헬스체크 엔드포인트 

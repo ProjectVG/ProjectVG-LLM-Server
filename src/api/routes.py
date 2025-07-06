@@ -5,6 +5,7 @@ from src.core.openai_client import OpenAIChatClient
 from src.core.system_prompt import SystemPrompt
 from src.utils.logger import get_logger
 from input import DEFAULT_MEMORY
+from src.api.system_routes import system_router
 
 # 로거 설정
 logger = get_logger(__name__)
@@ -68,13 +69,6 @@ async def chat_with_ai(request: ChatRequest):
             error_message=f"채팅 처리 중 오류: {str(e)}"
         )
         return error_response
-
-
-@router.get("/hello")
-async def hello():
-    """Hello World 체크용 엔드포인트"""
-    logger.info("Hello 엔드포인트 접근")    
-    return {"message": "Hello, World!", "status": "success"} 
 
 
 @router.get("/")
