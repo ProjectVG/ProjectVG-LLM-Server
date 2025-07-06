@@ -45,7 +45,6 @@ class OpenAIChatClient:
         return {
             "role": "system",
             "content": system_prompt.get_system_prompt_form()
-
         }
     
     def _get_user_prompt(self, user_prompt: str) -> dict:

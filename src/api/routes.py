@@ -4,7 +4,7 @@ from src.dto.response_dto import ChatResponse
 from src.core.openai_client import OpenAIChatClient
 from src.core.system_prompt import SystemPrompt
 from src.utils.logger import get_logger
-from input import DEFAULT_MEMORY
+from tests.test_input import DEFAULT_MEMORY
 from src.api.system_routes import system_router
 
 # 로거 설정
@@ -46,7 +46,7 @@ async def chat_with_ai(request: ChatRequest):
             user_prompt=request.user_message,
             history=request.conversation_history,
             memory=request.memory_context,
-            instructions=request.system_message,
+            instructions=request.instructions,
             max_tokens=request.max_tokens,
             temperature=request.temperature
         )

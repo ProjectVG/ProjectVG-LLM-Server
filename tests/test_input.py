@@ -44,7 +44,7 @@ def get_test_inputs():
 
 
 def get_instructions():
-    """지시사항들 반환"""
+    """테스트용 지시사항들 반환"""
     return DEFAULT_INSTRUCTIONS.copy()
 
 
