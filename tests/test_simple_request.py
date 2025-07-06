@@ -1,7 +1,7 @@
 import unittest
 from src.core.openai_client import OpenAIChatClient
 from src.config import config
-from input import get_test_memory, get_test_inputs, get_instructions
+from tests.test_input import get_test_memory, get_test_inputs, get_instructions
 
 
 class TestSimpleRequest(unittest.TestCase):
@@ -21,7 +21,6 @@ class TestSimpleRequest(unittest.TestCase):
         client = OpenAIChatClient()
         
         self.assertIsNotNone(client.api_key)
-        self.assertIsNotNone(client.model)
         self.assertIsNotNone(client.client)
         
         print("OpenAI 클라이언트 초기화 성공")
@@ -35,13 +34,16 @@ class TestSimpleRequest(unittest.TestCase):
         client = OpenAIChatClient()
         
         user_input = "안녕하세요"
-        reply, response = client.chat(user_input, memory=self.test_memory)
+        openai_response, response_time = client.chat(
+            user_prompt=user_input, 
+            memory=self.test_memory
+        )
         
-        self.assertIsNotNone(reply)
-        self.assertIsInstance(reply, str)
-        self.assertGreater(len(reply), 0)
+        self.assertIsNotNone(openai_response)
+        self.assertIsNotNone(openai_response.output_text)
+        self.assertGreater(len(openai_response.output_text), 0)
         
-        print(f"채팅 요청 성공: {reply[:50]}...")
+        print(f"채팅 요청 성공: {openai_response.output_text[:50]}...")
     
     def test_multiple_chat_requests(self):
         """여러 채팅 요청 테스트"""
@@ -53,16 +55,19 @@ class TestSimpleRequest(unittest.TestCase):
         
         test_inputs = get_test_inputs()
         
-        for i, user_input in enumerate(test_inputs[:3]):  # 처음 3개만 테스트
+        for i, user_input in enumerate(test_inputs[:3]):
             print(f"테스트 {i+1}: {user_input}")
             
-            reply, response = client.chat(user_input, memory=self.test_memory)
+            openai_response, response_time = client.chat(
+                user_prompt=user_input, 
+                memory=self.test_memory
+            )
             
-            self.assertIsNotNone(reply)
-            self.assertIsInstance(reply, str)
-            self.assertGreater(len(reply), 0)
+            self.assertIsNotNone(openai_response)
+            self.assertIsNotNone(openai_response.output_text)
+            self.assertGreater(len(openai_response.output_text), 0)
             
-            print(f"응답: {reply[:50]}...")
+            print(f"응답: {openai_response.output_text[:50]}...")
     
     def test_chat_with_instructions(self):
         """지시사항이 포함된 채팅 테스트"""
@@ -75,17 +80,17 @@ class TestSimpleRequest(unittest.TestCase):
         user_input = "파이썬에 대해 설명해줘"
         instructions = get_instructions()[0]
         
-        reply, response = client.chat(
-            user_input, 
+        openai_response, response_time = client.chat(
+            user_prompt=user_input, 
             instructions=instructions,
             memory=self.test_memory
         )
         
-        self.assertIsNotNone(reply)
-        self.assertIsInstance(reply, str)
-        self.assertGreater(len(reply), 0)
+        self.assertIsNotNone(openai_response)
+        self.assertIsNotNone(openai_response.output_text)
+        self.assertGreater(len(openai_response.output_text), 0)
         
-        print(f"지시사항 포함 채팅 성공: {reply[:50]}...")
+        print(f"지시사항 포함 채팅 성공: {openai_response.output_text[:50]}...")
     
     def test_response_time(self):
         """응답 시간 테스트"""
@@ -96,13 +101,16 @@ class TestSimpleRequest(unittest.TestCase):
         client = OpenAIChatClient()
         
         user_input = "안녕하세요"
-        reply, response = client.chat(user_input, memory=self.test_memory)
+        openai_response, response_time = client.chat(
+            user_prompt=user_input, 
+            memory=self.test_memory
+        )
         
-        self.assertIsNotNone(response.response_time)
-        self.assertGreater(response.response_time, 0)
-        self.assertLess(response.response_time, 30)
+        self.assertIsNotNone(response_time)
+        self.assertGreater(response_time, 0)
+        self.assertLess(response_time, 30)
         
-        print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"응답 시간: {response_time:.2f}초")
 
 
 def run_simple_request_tests():
