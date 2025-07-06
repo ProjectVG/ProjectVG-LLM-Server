@@ -11,7 +11,7 @@ class LoggerConfig:
     def __init__(
         self,
         level: int = logging.INFO,
-        format_string: str = "%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        format_string: str = "%(asctime)s [%(levelname)s] (%(name)s) : %(message)s",
         log_file: Optional[str] = None
     ):
         self.level = level
@@ -56,7 +56,7 @@ class LoggerConfig:
 
 def setup_logging(
     level: int = None,
-    format_string: str = "%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    format_string: str = "%(asctime)s [%(levelname)s] (%(name)s) : %(message)s",
     log_file: Optional[str] = None
 ):
     """로깅 설정"""
@@ -95,7 +95,7 @@ def setup_dev_logging():
     """개발 환경용 로깅 설정"""
     setup_logging(
         level=logging.INFO,
-        format_string="%(asctime)s %(levelname)s [%(name)s] %(message)s"
+        format_string="%(asctime)s [%(levelname)s] (%(name)s) : %(message)s"
     )
 
 
@@ -103,6 +103,50 @@ def setup_prod_logging(log_file: str = "logs/app.log"):
     """프로덕션 환경용 로깅 설정"""
     setup_logging(
         level=logging.INFO,
-        format_string="%(asctime)s %(levelname)s [%(name)s] %(funcName)s:%(lineno)d - %(message)s",
+        format_string="%(asctime)s [%(levelname)s] (%(name)s:%(funcName)s:%(lineno)d) : %(message)s",
         log_file=log_file
     ) 
+
+def get_uvicorn_custom_log():
+    """Uvicorn용 커스텀 로그 설정"""
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s [%(levelname)s] (%(name)s) : %(message)s"
+            },
+            "access": {
+                "format": "%(asctime)s [%(levelname)s] (%(name)s) : %(message)s"
+            }
+        },
+        "handlers": {
+            "default": {
+                "formatter": "default",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout"
+            },
+            "access": {
+                "formatter": "access",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stdout"
+            }
+        },
+        "loggers": {
+            "uvicorn": {
+                "handlers": ["default"],
+                "level": "INFO",
+                "propagate": False
+            },
+            "uvicorn.error": {
+                "handlers": ["default"],
+                "level": "INFO",
+                "propagate": False
+            },
+            "uvicorn.access": {
+                "handlers": ["access"],
+                "level": "INFO",
+                "propagate": False
+            }
+        }
+    } 
