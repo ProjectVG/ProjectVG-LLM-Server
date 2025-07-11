@@ -39,9 +39,9 @@ class OpenAIChatClient:
             logger.error("OPENAI_API_KEY를 불러오지 못했습니다.")
             raise ValueError("OPENAI_API_KEY를 불러오지 못했습니다.")
     
-    def _get_system_prompt(self, system_prompt: str, memory: list[str]) -> dict:
+    def _get_system_prompt(self, system_prompt: str, memory: list[str], role: str = "") -> dict:
         """시스템 프롬프트 반환"""
-        system_prompt = SystemPrompt(system_prompt=system_prompt, memory=memory)
+        system_prompt = SystemPrompt(system_prompt=system_prompt, memory=memory, role=role)
         return {
             "role": "system",
             "content": system_prompt.get_system_prompt_form()
@@ -112,6 +112,7 @@ class OpenAIChatClient:
         user_prompt: str = "",
         history: list[str] = None,
         memory: list[str] = [],
+        role: str = "",
         instructions: str = "",
         max_tokens: int = DEFAULT_MAX_TOKENS,
         temperature: float = DEFAULT_TEMPERATURE
@@ -125,6 +126,7 @@ class OpenAIChatClient:
             instructions (str): 추가 지시사항
             memory (list[str]): 이전 대화 기억
             history (list[str]): '역할:내용' 형태의 대화 기록
+            role (str): 캐릭터의 역할과 설정
             session_id (str): 세션 ID
             
         Returns:
@@ -132,7 +134,7 @@ class OpenAIChatClient:
         """
         start_time = time.time()
         
-        system_prompt = self._get_system_prompt(system_prompt, memory) #시스템 프롬포트
+        system_prompt = self._get_system_prompt(system_prompt, memory, role) #시스템 프롬포트
         conversation_history = self._get_history(history) #대화 히스토리
         user_prompt = self._get_user_prompt(user_prompt) #사용자 프롬포트
 

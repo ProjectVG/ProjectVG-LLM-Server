@@ -8,6 +8,8 @@ DEFAULT_MEMORY = [
     "나랑 어제 데이트함"
 ]
 
+DEFAULT_ROLE = "당신은 친근하고 유머러스한 AI 어시스턴트입니다. 항상 긍정적이고 도움이 되는 답변을 제공합니다."
+
 def get_user_input_from_console() -> str:
     """콘솔에서 사용자 Input"""
     user_input = str(input("You: "))
@@ -16,6 +18,10 @@ def get_user_input_from_console() -> str:
 def get_memory() -> list[str]:
     """메모리 로드"""
     return DEFAULT_MEMORY
+
+def get_role() -> str:
+    """역할 설정 로드"""
+    return DEFAULT_ROLE
 
 def app():
     """메인 애플리케이션"""
@@ -31,10 +37,12 @@ def app():
         while True:
             user_input = get_user_input_from_console()
             memory = get_memory()
+            role = get_role()
             
             # SystemPrompt 객체 생성
             system_prompt = SystemPrompt(
                 memory=memory,
+                role=role,
                 current_situation="대화 중",
                 custom_instructions=""
             )

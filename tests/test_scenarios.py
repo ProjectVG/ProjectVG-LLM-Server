@@ -267,6 +267,68 @@ class TestScenarios(unittest.TestCase):
         self.assertEqual(success_count, len(performance_inputs), "일부 성능 테스트 실패")
         print("[SUCCESS] 전체 성능 시나리오 테스트 성공")
 
+    def test_role_functionality(self):
+        """역할 설정 기능 테스트 - 다양한 역할에 따른 응답 스타일 확인"""
+        print("\n8. 역할 설정 테스트")
+        print("-" * 40)
+        
+        from tests.test_input import get_role_variants
+        
+        role_variants = get_role_variants()
+        prompt = "파이썬에 대해 설명해줘"
+        
+        print(f"테스트할 역할 개수: {len(role_variants)}")
+        print(f"프롬프트: {prompt}")
+        
+        for i, role in enumerate(role_variants):
+            print(f"\n--- 역할 {i+1} ---")
+            print(f"역할: {role[:50]}...")
+            
+            response, response_time = self.client.chat(
+                user_prompt=prompt,
+                memory=[],
+                system_prompt="",
+                role=role,
+                instructions=""
+            )
+            
+            response_text = response.output_text
+            print(f"응답: {response_text[:100]}...")
+            print(f"응답 시간: {response_time:.2f}초")
+            
+            # 기본 검증
+            self.assertGreater(len(response_text), 0, f"역할 {i+1}에서 빈 응답")
+            print(f"[SUCCESS] 역할 {i+1} 성공")
+    
+    def test_role_with_memory(self):
+        """역할과 메모리 조합 테스트 - 역할과 메모리가 함께 작동하는지 확인"""
+        print("\n9. 역할과 메모리 조합 테스트")
+        print("-" * 40)
+        
+        role = "당신은 친근한 AI 어시스턴트입니다. 반말을 사용합니다. 사용자의 취향을 기억하고 그에 맞는 답변을 제공합니다."
+        memory = ["사용자는 파이썬을 좋아합니다", "사용자는 간단한 설명을 선호합니다"]
+        prompt = "프로그래밍 언어에 대해 설명해줘"
+        
+        print(f"역할: {role[:50]}...")
+        print(f"메모리: {memory}")
+        print(f"프롬프트: {prompt}")
+        
+        response, response_time = self.client.chat(
+            user_prompt=prompt,
+            memory=memory,
+            system_prompt="",
+            role=role,
+            instructions=""
+        )
+        
+        response_text = response.output_text
+        print(f"응답: {response_text[:150]}...")
+        print(f"응답 시간: {response_time:.2f}초")
+        
+        # 결과 검증 - 파이썬이 언급되었는지 확인
+        self.assertIn("파이썬", response_text.lower(), "AI가 메모리 정보를 활용하지 못함")
+        print("[SUCCESS] 역할과 메모리 조합 테스트 성공: AI가 역할과 메모리를 모두 활용하여 응답")
+
 
 def run_scenario_tests():
     """시나리오 테스트 실행"""

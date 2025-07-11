@@ -46,6 +46,7 @@ async def chat_with_ai(request: ChatRequest):
             user_prompt=request.user_message,
             history=request.conversation_history,
             memory=request.memory_context,
+            role=request.role,
             instructions=request.instructions,
             max_tokens=request.max_tokens,
             temperature=request.temperature
