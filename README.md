@@ -83,6 +83,7 @@ docker-compose up --build
   "session_id": "session_123",
   "system_message": "친근하게 대화해주세요",
   "user_message": "파이썬에 대해 알려줘",
+  "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다. 항상 긍정적이고 도움이 되는 답변을 제공합니다.",
   "conversation_history": [
     "user:안녕하세요",
     "assistant:안녕하세요! 무엇을 도와드릴까요?"
