@@ -1,6 +1,6 @@
 import logging
-from src.core.openai_client import OpenAIChatClient
-from src.core.system_prompt import SystemPrompt
+from src.services.chat_service import ChatService
+from src.dto.request_dto import ChatRequest
 
 
 DEFAULT_MEMORY = [
@@ -30,8 +30,8 @@ def app():
     history = []  # 대화 히스토리 (역할:내용 문자열 리스트)
 
     try:
-        chat_client = OpenAIChatClient()
-        print("OpenAI 채팅 클라이언트가 초기화 완료")
+        chat_service = ChatService()
+        print("채팅 서비스가 초기화 완료")
         print("대화를 시작합니다.")
         
         while True:
@@ -39,27 +39,23 @@ def app():
             memory = get_memory()
             role = get_role()
             
-            # SystemPrompt 객체 생성
-            system_prompt = SystemPrompt(
-                memory=memory,
+            # ChatRequest 객체 생성
+            request = ChatRequest(
+                user_message=user_input,
+                memory_context=memory,
                 role=role,
-                current_situation="대화 중",
-                custom_instructions=""
+                conversation_history=history
             )
             
             try:
-                reply, response = chat_client.chat(
-                    user_input,
-                    system_prompt=system_prompt,
-                    history=history
-                )
-                print("AI:", reply)
+                response = chat_service.process_chat_request(request)
+                print("AI:", response.response_text)
 
                 if print_info:
                     response.print_response_info()
                 # history에 user/assistant 대화 추가
                 history.append(f"user:{user_input}")
-                history.append(f"assistant:{reply}")
+                history.append(f"assistant:{response.response_text}")
                 
             except Exception as e:
                 logging.error(f"채팅 중 오류 발생: {e}")

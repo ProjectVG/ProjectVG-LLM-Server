@@ -1,11 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from src.dto.request_dto import ChatRequest
 from src.dto.response_dto import ChatResponse
-from src.core.openai_client import OpenAIChatClient
-from src.core.system_prompt import SystemPrompt
+from src.services.chat_service import ChatService
 from src.utils.logger import get_logger
-from tests.test_input import DEFAULT_MEMORY
-from src.api.system_routes import system_router
 
 # 로거 설정
 logger = get_logger(__name__)
@@ -13,8 +10,8 @@ logger = get_logger(__name__)
 # 라우터 생성
 router = APIRouter(prefix="/api/v1", tags=["chat"])
 
-# OpenAI 클라이언트 인스턴스
-chat_client = OpenAIChatClient()
+# 채팅 서비스 인스턴스
+chat_service = ChatService()
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -39,25 +36,8 @@ async def chat_with_ai(request: ChatRequest):
         
         logger.info(f"채팅 요청 받음: {request.user_message[:50]}...")
         
-        openai_response, response_time = chat_client.chat(
-            session_id=request.session_id,
-            model=request.model,
-            system_prompt=request.system_message,
-            user_prompt=request.user_message,
-            history=request.conversation_history,
-            memory=request.memory_context,
-            role=request.role,
-            instructions=request.instructions,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature
-        )
-
-        # 응답 결과
-        response = ChatResponse.from_openai_response(
-            openai_response=openai_response,
-            session_id=request.session_id,
-            response_time=response_time
-        )
+        # 서비스를 통한 채팅 처리
+        response = chat_service.process_chat_request(request)
         
         logger.info(f"채팅 응답 완료: {response.response_time:.2f}s")
         return response
