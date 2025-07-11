@@ -13,6 +13,7 @@ import unittest
 import time
 from src.core.openai_client import OpenAIChatClient
 from src.config import config
+from tests.test_input import get_test_max_tokens, get_performance_test_max_tokens
 
 
 class TestScenarios(unittest.TestCase):
@@ -42,7 +43,8 @@ class TestScenarios(unittest.TestCase):
             memory=[],
             system_prompt="",
             instructions="",
-            history=history
+            history=history,
+            max_tokens=get_test_max_tokens()
         )
         
         response_text = response.output_text
@@ -62,7 +64,8 @@ class TestScenarios(unittest.TestCase):
             memory=[],
             system_prompt="",
             instructions="",
-            history=history
+            history=history,
+            max_tokens=get_test_max_tokens()  # 테스트용 토큰 제한
         )
         
         response2_text = response2.output_text
@@ -89,7 +92,8 @@ class TestScenarios(unittest.TestCase):
             user_prompt=prompt,
             memory=memory,
             system_prompt="",
-            instructions=""
+            instructions="",
+            max_tokens=get_test_max_tokens() 
         )
         
         response_text = response.output_text
@@ -115,7 +119,8 @@ class TestScenarios(unittest.TestCase):
             user_prompt=prompt,
             memory=[],
             system_prompt="",
-            instructions=system_message
+            instructions=system_message,
+            max_tokens=get_test_max_tokens() 
         )
         
         response_text = response.output_text
@@ -141,7 +146,8 @@ class TestScenarios(unittest.TestCase):
             user_prompt=prompt,
             memory=[],
             system_prompt="",
-            instructions=instructions
+            instructions=instructions,
+            max_tokens=get_test_max_tokens()  # 테스트용 토큰 제한
         )
         
         response_text = response.output_text
@@ -160,7 +166,7 @@ class TestScenarios(unittest.TestCase):
         print("\n5. 다중 대화 시나리오 테스트")
         print("-" * 40)
         
-        from tests.test_input import get_test_inputs, get_test_memory
+        from tests.test_input import get_test_inputs, get_test_memory, get_test_max_tokens, get_performance_test_max_tokens
         
         test_inputs = get_test_inputs()
         memory = get_test_memory()
@@ -176,7 +182,8 @@ class TestScenarios(unittest.TestCase):
                 user_prompt=user_input,
                 memory=memory,
                 system_prompt="",
-                instructions=""
+                instructions="",
+                max_tokens=get_test_max_tokens()
             )
             
             response_text = response.output_text
@@ -192,7 +199,7 @@ class TestScenarios(unittest.TestCase):
         print("\n6. 지시사항 준수 시나리오 테스트")
         print("-" * 40)
         
-        from tests.test_input import get_instructions, get_test_memory
+        from tests.test_input import get_instructions, get_test_memory, get_test_max_tokens
         
         instructions_list = get_instructions()
         memory = get_test_memory()
@@ -209,7 +216,8 @@ class TestScenarios(unittest.TestCase):
                 user_prompt=prompt,
                 memory=memory,
                 system_prompt="",
-                instructions=instruction
+                instructions=instruction,
+                max_tokens=get_test_max_tokens()  # 테스트용 토큰 제한
             )
             
             response_text = response.output_text
@@ -225,7 +233,7 @@ class TestScenarios(unittest.TestCase):
         print("\n7. 성능 시나리오 테스트")
         print("-" * 40)
         
-        from tests.test_input import get_performance_inputs, get_test_memory
+        from tests.test_input import get_performance_inputs, get_test_memory, get_performance_test_max_tokens
         
         performance_inputs = get_performance_inputs()
         memory = get_test_memory()
@@ -243,7 +251,8 @@ class TestScenarios(unittest.TestCase):
                 user_prompt=user_input,
                 memory=memory,
                 system_prompt="",
-                instructions=""
+                instructions="",
+                max_tokens=get_performance_test_max_tokens()  # 성능 테스트는 조금 더 많은 토큰 허용
             )
             
             response_text = response.output_text
@@ -272,7 +281,7 @@ class TestScenarios(unittest.TestCase):
         print("\n8. 역할 설정 테스트")
         print("-" * 40)
         
-        from tests.test_input import get_role_variants
+        from tests.test_input import get_role_variants, get_test_max_tokens
         
         role_variants = get_role_variants()
         prompt = "파이썬에 대해 설명해줘"
@@ -289,7 +298,8 @@ class TestScenarios(unittest.TestCase):
                 memory=[],
                 system_prompt="",
                 role=role,
-                instructions=""
+                instructions="",
+                max_tokens=get_test_max_tokens()
             )
             
             response_text = response.output_text
@@ -318,7 +328,8 @@ class TestScenarios(unittest.TestCase):
             memory=memory,
             system_prompt="",
             role=role,
-            instructions=""
+            instructions="",
+            max_tokens=get_test_max_tokens()
         )
         
         response_text = response.output_text

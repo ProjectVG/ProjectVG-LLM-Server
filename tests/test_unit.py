@@ -11,6 +11,7 @@
 import unittest
 from src.core.openai_client import OpenAIChatClient
 from src.config import config
+from tests.test_input import get_test_max_tokens
 
 
 class TestUnit(unittest.TestCase):
@@ -44,7 +45,8 @@ class TestUnit(unittest.TestCase):
         
         openai_response, response_time = self.client.chat(
             user_prompt=user_input, 
-            memory=[]
+            memory=[],
+            max_tokens=get_test_max_tokens()
         )
         
         response_text = openai_response.output_text
@@ -67,7 +69,8 @@ class TestUnit(unittest.TestCase):
         
         openai_response, response_time = self.client.chat(
             user_prompt=user_input, 
-            memory=[]
+            memory=[],
+            max_tokens=get_test_max_tokens()
         )
         
         print(f"응답 시간: {response_time:.2f}초")
@@ -91,7 +94,8 @@ class TestUnit(unittest.TestCase):
         
         openai_response, response_time = self.client.chat(
             user_prompt=user_input, 
-            memory=memory
+            memory=memory,
+            max_tokens=get_test_max_tokens()
         )
         
         response_text = openai_response.output_text
@@ -118,7 +122,8 @@ class TestUnit(unittest.TestCase):
         openai_response, response_time = self.client.chat(
             user_prompt=user_input, 
             memory=[],
-            instructions=instructions
+            instructions=instructions,
+            max_tokens=get_test_max_tokens()
         )
         
         response_text = openai_response.output_text

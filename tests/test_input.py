@@ -11,6 +11,10 @@ DEFAULT_MEMORY = [
 # 기본 테스트 역할 설정
 DEFAULT_ROLE = "당신은 친근하고 유머러스한 AI 어시스턴트입니다. 항상 긍정적이고 도움이 되는 답변을 제공합니다."
 
+# 테스트용 토큰 제한 설정
+TEST_MAX_TOKENS = 100  # 기본 테스트용 토큰 제한
+PERFORMANCE_TEST_MAX_TOKENS = 150  # 성능 테스트용 토큰 제한
+
 # 다양한 역할 설정 테스트
 ROLE_VARIANTS = [
     "당신은 친근하고 유머러스한 AI 어시스턴트입니다. 항상 긍정적이고 도움이 되는 답변을 제공합니다.",
@@ -98,4 +102,14 @@ def get_custom_role():
     custom_role = os.getenv("TEST_ROLE")
     if custom_role:
         return custom_role
-    return DEFAULT_ROLE 
+    return DEFAULT_ROLE
+
+
+def get_test_max_tokens():
+    """테스트용 토큰 제한 반환"""
+    return TEST_MAX_TOKENS
+
+
+def get_performance_test_max_tokens():
+    """성능 테스트용 토큰 제한 반환"""
+    return PERFORMANCE_TEST_MAX_TOKENS 
