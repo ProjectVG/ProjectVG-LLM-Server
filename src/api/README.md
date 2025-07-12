@@ -21,6 +21,8 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
   "session_id": "string",
   "system_message": "string",
   "user_message": "string",
+  "role": "string",
+  "instructions": "string",
   "conversation_history": ["string"],
   "memory_context": ["string"],
   "max_tokens": 1000,
@@ -33,13 +35,15 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 
 | 필드 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
-| `session_id` | string | O | - | 세션 ID |
+| `session_id` | string | X | "" | 세션 ID |
 | `system_message` | string | X | "" | 추가 시스템 프롬프트 메시지 |
 | `user_message` | string | O | - | 사용자 입력 메시지 |
+| `role` | string | X | "" | AI 역할 설정 (시스템 프롬프트에 포함) |
+| `instructions` | string | X | "" | 추가 지시사항 |
 | `conversation_history` | string[] | X | [] | 최근 대화 내역 |
 | `memory_context` | string[] | X | [] | 장기 기억 Context |
-| `max_tokens` | int | X | 1000 | 최대 토큰 수 |
-| `temperature` | float | X | 0.7 | 생성 온도 |
+| `max_tokens` | int | X | 1000 | 최대 토큰 수 (0보다 커야 함) |
+| `temperature` | float | X | 0.7 | 생성 온도 (0-2 사이) |
 | `model` | string | X | "gpt-4o-mini" | 사용할 모델 |
 
 #### conversation_history 필드 형식
@@ -99,10 +103,12 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 #### HTTP 상태 코드
 
 - `200 OK`: 성공적인 응답
+- `400 Bad Request`: 요청 데이터 검증 오류
 - `422 Unprocessable Entity`: 요청 데이터 형식 오류
 - `500 Internal Server Error`: 서버 내부 오류
+- `503 Service Unavailable`: AI 서비스 연결 오류
 
-### GET /
+### GET /api/v1/
 
 루트 엔드포인트로 API 기본 정보를 반환합니다.
 
@@ -115,21 +121,65 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 }
 ```
 
+
+
 ## 에러 처리
 
-API는 표준 HTTP 상태 코드를 사용하며, 오류 발생 시 다음과 같은 형식으로 응답합니다:
+API는 체계적인 예외 처리 시스템을 사용하며, 다음과 같은 커스텀 예외들을 제공합니다:
+
+### 예외 타입
+
+1. **ValidationException** (400 Bad Request)
+   - 요청 데이터 검증 실패
+   - 필수 필드 누락, 잘못된 값 형식 등
+
+2. **ConfigurationException** (500 Internal Server Error)
+   - 시스템 설정 오류
+   - API 키 누락, 환경 변수 오류 등
+
+3. **ChatServiceException** (503 Service Unavailable)
+   - 채팅 서비스 처리 중 오류
+   - 비즈니스 로직 오류
+
+4. **OpenAIClientException** (503 Service Unavailable)
+   - OpenAI API 연결 오류
+   - API 호출 실패, 네트워크 오류 등
+
+### 에러 응답 형식
+
+모든 에러는 일관된 형식으로 응답됩니다:
 
 ```json
 {
-  "detail": "오류 메시지"
+  "session_id": "string",
+  "response_text": "",
+  "model": "",
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "total_tokens_used": 0,
+  "output_format": "",
+  "created_at": "2024-01-01T00:00:00",
+  "temperature": null,
+  "instructions": null,
+  "response_time": 0.0,
+  "success": false,
+  "error_message": "오류 메시지"
 }
 ```
+
+### 검증 규칙
+
+- `user_message`: 필수 필드, 빈 문자열 불가
+- `max_tokens`: 0보다 커야 함
+- `temperature`: 0과 2 사이의 값이어야 함
+- `conversation_history`: 각 항목은 "role:content" 형식이어야 함
 
 ## 주의사항
 
 1. **토큰 제한**: OpenAI API의 토큰 제한을 고려하여 conversation_history 길이를 적절히 관리하세요.
 2. **메모리 관리**: memory_context 배열이 너무 길면 시스템 프롬프트가 복잡해질 수 있습니다.
 3. **히스토리 형식**: conversation_history 배열의 각 항목은 반드시 "role:content" 형식을 지켜야 합니다.
+4. **에러 처리**: 모든 API 호출은 적절한 에러 처리를 포함해야 합니다.
 
 ## 사용 예시
 
@@ -138,12 +188,14 @@ API는 표준 HTTP 상태 코드를 사용하며, 오류 발생 시 다음과 �
 ```javascript
 const axios = require('axios');
 
-async function chatWithAI(sessionId, userMessage, history = [], memory = []) {
+async function chatWithAI(sessionId, userMessage, history = [], memory = [], role = "") {
   try {
     const response = await axios.post('http://localhost:5601/api/v1/chat', {
       session_id: sessionId,
       system_message: '친근하게 대화해주세요',
       user_message: userMessage,
+      role: role,
+      instructions: '간결하고 명확하게 답변해주세요',
       conversation_history: history,
       memory_context: memory,
       max_tokens: 1000,
@@ -153,8 +205,13 @@ async function chatWithAI(sessionId, userMessage, history = [], memory = []) {
     
     return response.data;
   } catch (error) {
-    console.error('Chat error:', error.response.data);
-    throw error;
+    if (error.response) {
+      console.error('API Error:', error.response.data);
+      return error.response.data;
+    } else {
+      console.error('Network Error:', error.message);
+      throw error;
+    }
   }
 }
 
@@ -165,10 +222,16 @@ const history = [
   'assistant:안녕하세요! 무엇을 도와드릴까요?'
 ];
 const memory = ['사용자는 개발자입니다'];
+const role = '당신은 친근하고 유머러스한 AI 어시스턴트입니다.';
 
-chatWithAI(sessionId, '파이썬에 대해 알려주세요', history, memory)
+chatWithAI(sessionId, '파이썬에 대해 알려주세요', history, memory, role)
   .then(response => {
-    console.log('AI Response:', response.response_text);
+    if (response.success) {
+      console.log('AI Response:', response.response_text);
+      console.log('Token Usage:', response.total_tokens_used);
+    } else {
+      console.log('Error:', response.error_message);
+    }
   });
 ```
 
@@ -177,7 +240,7 @@ chatWithAI(sessionId, '파이썬에 대해 알려주세요', history, memory)
 ```python
 import requests
 
-def chat_with_ai(session_id, user_message, history=None, memory=None):
+def chat_with_ai(session_id, user_message, history=None, memory=None, role=""):
     if history is None:
         history = []
     if memory is None:
@@ -187,6 +250,8 @@ def chat_with_ai(session_id, user_message, history=None, memory=None):
         'session_id': session_id,
         'system_message': '친근하게 대화해주세요',
         'user_message': user_message,
+        'role': role,
+        'instructions': '간결하고 명확하게 답변해주세요',
         'conversation_history': history,
         'memory_context': memory,
         'max_tokens': 1000,
@@ -194,10 +259,13 @@ def chat_with_ai(session_id, user_message, history=None, memory=None):
         'model': 'gpt-4o-mini'
     }
     
-    response = requests.post('http://localhost:5601/api/v1/chat', json=payload)
-    response.raise_for_status()
-    
-    return response.json()
+    try:
+        response = requests.post('http://localhost:5601/api/v1/chat', json=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"API 호출 오류: {e}")
+        return None
 
 # 사용 예시
 session_id = 'session_123'
@@ -206,11 +274,38 @@ history = [
     'assistant:안녕하세요! 무엇을 도와드릴까요?'
 ]
 memory = ['사용자는 개발자입니다']
+role = '당신은 친근하고 유머러스한 AI 어시스턴트입니다.'
 
-result = chat_with_ai(session_id, '파이썬에 대해 알려주세요', history, memory)
-print('AI Response:', result['response_text'])
+result = chat_with_ai(session_id, '파이썬에 대해 알려주세요', history, memory, role)
+if result and result.get('success'):
+    print('AI Response:', result['response_text'])
+    print('Token Usage:', result['total_tokens_used'])
+else:
+    print('Error:', result.get('error_message', 'Unknown error'))
+```
+
+### cURL
+
+```bash
+curl -X POST "http://localhost:5601/api/v1/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "session_123",
+    "user_message": "파이썬에 대해 알려주세요",
+    "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
+    "instructions": "간결하고 명확하게 답변해주세요",
+    "conversation_history": [
+      "user:안녕하세요",
+      "assistant:안녕하세요! 무엇을 도와드릴까요?"
+    ],
+    "memory_context": ["사용자는 개발자입니다"],
+    "max_tokens": 1000,
+    "temperature": 0.7,
+    "model": "gpt-4o-mini"
+  }'
 ```
 
 ## 관련 문서
 
-- **시스템 모니터링 API**: [SYSTEM_API_README.md](SYSTEM_API_README.md) - 시스템 정보 및 헬스체크 엔드포인트 
+- **시스템 모니터링 API**: [SYSTEM_API_README.md](SYSTEM_API_README.md) - 시스템 정보 및 헬스체크 엔드포인트
+- **프로젝트 README**: [../../README.md](../../README.md) - 전체 프로젝트 개요 및 설정 방법 
