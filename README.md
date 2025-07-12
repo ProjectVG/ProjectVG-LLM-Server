@@ -14,6 +14,8 @@
 - **모듈화된 구조**: API, Core, DTO, Config, Utils 등
 - **시스템 모니터링 API** 내장
 - **테스트 코드 및 샘플 코드 제공**
+- **API Key 관리**: 사용자 제공 API Key 지원 및 Free 모드 기능
+- **설정 관리**: 환경 변수 기반 설정으로 유연한 배포
 
 ---
 
@@ -91,6 +93,8 @@ docker-compose up --build
     "assistant:안녕하세요! 무엇을 도와드릴까요?"
   ],
   "memory_context": ["사용자는 개발자입니다"],
+  "openai_api_key": "sk-your-api-key",
+  "free_mode": true,
   "max_tokens": 1000,
   "temperature": 0.7,
   "model": "gpt-4o-mini"
@@ -112,10 +116,21 @@ docker-compose up --build
   "temperature": 0.7,
   "instructions": "",
   "response_time": 1.23,
+  "api_key_source": "user_provided",
   "success": true,
   "error_message": null
 }
 ```
+
+#### API Key 관리 기능
+
+- **`openai_api_key`** (선택사항): 사용자가 제공하는 OpenAI API Key
+- **`free_mode`** (선택사항): Free 모드 활성화 여부
+  - `true`: 사용자 제공 API Key가 유효하지 않으면 기본 Key로 폴백
+  - `false`: 사용자 제공 API Key만 사용 (유효하지 않으면 오류)
+- **`api_key_source`** (응답): 사용된 API Key 소스
+  - `"default"`: 기본 설정된 API Key 사용
+  - `"user_provided"`: 사용자가 제공한 API Key 사용
 
 - **GET /**  
   서버 상태 확인용 엔드포인트
@@ -143,6 +158,7 @@ docker-compose up --build
 - **환경설정**: `src/config/config.py`에서 환경 변수 관리
 - **테스트**: `tests/` 폴더에 단위/시나리오 테스트 코드 포함
 - **토큰 최적화**: 테스트 시 토큰 사용량을 제한하여 비용 효율성 확보
+- **API Key 관리**: 사용자 제공 API Key 검증 및 Free 모드 지원
 
 ---
 
@@ -153,9 +169,20 @@ docker-compose up --build
 ```python
 import requests
 
+# 기본 사용
 payload = {
     "session_id": "session_123",
     "user_message": "파이썬에 대해 알려줘"
+}
+response = requests.post("http://localhost:5601/api/v1/chat", json=payload)
+print(response.json())
+
+# Free 모드 사용
+payload = {
+    "session_id": "session_123",
+    "user_message": "파이썬에 대해 알려줘",
+    "openai_api_key": "sk-your-api-key",
+    "free_mode": True
 }
 response = requests.post("http://localhost:5601/api/v1/chat", json=payload)
 print(response.json())
@@ -165,9 +192,21 @@ print(response.json())
 
 ```javascript
 const axios = require('axios');
+
+// 기본 사용
 axios.post('http://localhost:5601/api/v1/chat', {
   session_id: 'session_123',
   user_message: '파이썬에 대해 알려줘'
+}).then(res => {
+  console.log(res.data);
+});
+
+// Free 모드 사용
+axios.post('http://localhost:5601/api/v1/chat', {
+  session_id: 'session_123',
+  user_message: '파이썬에 대해 알려줘',
+  openai_api_key: 'sk-your-api-key',
+  free_mode: true
 }).then(res => {
   console.log(res.data);
 });
