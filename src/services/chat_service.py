@@ -1,5 +1,4 @@
 from src.external.openai_client import OpenAIClient
-from src.core.system_prompt import SystemPrompt
 from src.dto.request_dto import ChatRequest
 from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
@@ -18,11 +17,11 @@ class ChatService:
     def __init__(self):
         self.openai_client = OpenAIClient()
     
-    def _create_system_message(self, system_prompt: str, memory: list[str], role: str = "") -> dict:
-        system_prompt_obj = SystemPrompt(system_prompt=system_prompt, memory=memory, role=role)
+    def _create_system_message(self, request: ChatRequest) -> dict:
+        """시스템 메시지 생성"""
         return {
             "role": "system",
-            "content": system_prompt_obj.get_system_prompt_form()
+            "content": request.get_system_message()
         }
     
     def _create_user_message(self, user_prompt: str) -> dict:
@@ -87,11 +86,7 @@ class ChatService:
             self._validate_request(request)
             
             # 메시지 구성
-            system_message = self._create_system_message(
-                request.system_message, 
-                request.memory_context, 
-                request.role
-            )
+            system_message = self._create_system_message(request)
             conversation_history = self._format_conversation_history(request.conversation_history or [])
             user_message = self._create_user_message(request.user_message)
 

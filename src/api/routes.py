@@ -4,13 +4,10 @@ from src.dto.response_dto import ChatResponse
 from src.services.chat_service import ChatService
 from src.utils.logger import get_logger
 
-# 로거 설정
 logger = get_logger(__name__)
 
-# 라우터 생성
 router = APIRouter(prefix="/api/v1", tags=["chat"])
 
-# 채팅 서비스 인스턴스
 chat_service = ChatService()
 
 
