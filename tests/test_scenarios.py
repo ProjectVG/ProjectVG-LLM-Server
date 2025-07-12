@@ -9,6 +9,7 @@
 - 성능 시나리오 테스트
 - 역할 설정 테스트
 - 역할과 메모리 조합 테스트
+- API Key 및 Free 모드 테스트
 """
 
 import unittest
@@ -22,10 +23,6 @@ class TestScenarios(unittest.TestCase):
     
     def setUp(self):
         """테스트 설정"""
-        api_key = config.get("OPENAI_API_KEY")
-        if not api_key:
-            self.skipTest("OPENAI_API_KEY가 설정되지 않았습니다.")
-        
         self.chat_service = ChatService()
         self.conversation_history = []
     
@@ -43,13 +40,15 @@ class TestScenarios(unittest.TestCase):
         
         request1 = ChatRequest(
             user_message=first_prompt,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response1 = self.chat_service.process_chat_request(request1)
         response_text = response1.response_text
         print(f"첫 번째 응답: {response_text}")
         print(f"응답 시간: {response1.response_time:.2f}초")
+        print(f"API Key 소스: {response1.api_key_source}")
         
         # history에 첫 번째 대화 추가
         history.append(f"user:{first_prompt}")
@@ -62,13 +61,15 @@ class TestScenarios(unittest.TestCase):
         request2 = ChatRequest(
             user_message=second_prompt,
             conversation_history=history,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response2 = self.chat_service.process_chat_request(request2)
         response2_text = response2.response_text
         print(f"두 번째 응답: {response2_text}")
         print(f"응답 시간: {response2.response_time:.2f}초")
+        print(f"API Key 소스: {response2.api_key_source}")
         
         # 결과 검증
         self.assertIn("68", response2_text, "AI가 이전 지시사항을 기억하지 못함")
@@ -91,13 +92,15 @@ class TestScenarios(unittest.TestCase):
         request = ChatRequest(
             user_message=prompt,
             memory_context=memory,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response = self.chat_service.process_chat_request(request)
         
         print(f"응답: {response.response_text}")
         print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"API Key 소스: {response.api_key_source}")
         
         # 결과 검증
         self.assertIn("백합", response.response_text, "AI가 메모리 정보를 활용하지 못함")
@@ -118,13 +121,15 @@ class TestScenarios(unittest.TestCase):
         request = ChatRequest(
             user_message=prompt,
             system_message=system_message,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response = self.chat_service.process_chat_request(request)
         
         print(f"응답: {response.response_text}")
         print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"API Key 소스: {response.api_key_source}")
         
         # 결과 검증
         self.assertIn("냥", response.response_text, "AI가 시스템 메시지를 따르지 않음")
@@ -145,13 +150,15 @@ class TestScenarios(unittest.TestCase):
         request = ChatRequest(
             user_message=prompt,
             instructions=instructions,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response = self.chat_service.process_chat_request(request)
         
         print(f"응답: {response.response_text}")
         print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"API Key 소스: {response.api_key_source}")
         
         # 결과 검증
         self.assertTrue(
@@ -180,13 +187,15 @@ class TestScenarios(unittest.TestCase):
             request = ChatRequest(
                 user_message=user_input,
                 memory_context=memory,
-                max_tokens=get_test_max_tokens()
+                max_tokens=get_test_max_tokens(),
+                free_mode=True
             )
             
             response = self.chat_service.process_chat_request(request)
             
             print(f"AI: {response.response_text}")
             print(f"응답 시간: {response.response_time:.2f}초")
+            print(f"API Key 소스: {response.api_key_source}")
             
             # 기본 검증
             self.assertGreater(len(response.response_text), 0, f"대화 {i+1}에서 빈 응답")
@@ -214,13 +223,15 @@ class TestScenarios(unittest.TestCase):
                 user_message=prompt,
                 memory_context=memory,
                 instructions=instruction,
-                max_tokens=get_test_max_tokens()
+                max_tokens=get_test_max_tokens(),
+                free_mode=True
             )
             
             response = self.chat_service.process_chat_request(request)
             
             print(f"응답: {response.response_text[:100]}...")
             print(f"응답 시간: {response.response_time:.2f}초")
+            print(f"API Key 소스: {response.api_key_source}")
             
             # 기본 검증
             self.assertGreater(len(response.response_text), 0, f"지시사항 {i+1}에서 빈 응답")
@@ -248,7 +259,8 @@ class TestScenarios(unittest.TestCase):
             request = ChatRequest(
                 user_message=user_input,
                 memory_context=memory,
-                max_tokens=get_performance_test_max_tokens()
+                max_tokens=get_performance_test_max_tokens(),
+                free_mode=True
             )
             
             response = self.chat_service.process_chat_request(request)
@@ -257,6 +269,7 @@ class TestScenarios(unittest.TestCase):
             
             print(f"응답 길이: {len(response.response_text)} 문자")
             print(f"응답 시간: {response.response_time:.2f}초")
+            print(f"API Key 소스: {response.api_key_source}")
             
             # 성능 기준 검증 (30초 이내)
             self.assertLess(response.response_time, 30, f"성능 테스트 {i+1}에서 응답 시간 초과")
@@ -293,13 +306,15 @@ class TestScenarios(unittest.TestCase):
             request = ChatRequest(
                 user_message=prompt,
                 role=role,
-                max_tokens=get_test_max_tokens()
+                max_tokens=get_test_max_tokens(),
+                free_mode=True
             )
             
             response = self.chat_service.process_chat_request(request)
             
             print(f"응답: {response.response_text[:100]}...")
             print(f"응답 시간: {response.response_time:.2f}초")
+            print(f"API Key 소스: {response.api_key_source}")
             
             # 기본 검증
             self.assertGreater(len(response.response_text), 0, f"역할 {i+1}에서 빈 응답")
@@ -323,17 +338,79 @@ class TestScenarios(unittest.TestCase):
             user_message=prompt,
             memory_context=memory,
             role=role,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         response = self.chat_service.process_chat_request(request)
         
         print(f"응답: {response.response_text[:150]}...")
         print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"API Key 소스: {response.api_key_source}")
         
         # 결과 검증 - 파이썬이 언급되었는지 확인
         self.assertIn("파이썬", response.response_text.lower(), "AI가 메모리 정보를 활용하지 못함")
         print("[SUCCESS] 역할과 메모리 조합 테스트 성공: AI가 역할과 메모리를 모두 활용하여 응답")
+    
+    def test_api_key_and_free_mode_scenarios(self):
+        print("\n10. API Key 및 Free 모드 시나리오 테스트")
+        print("-" * 40)
+        
+        from src.dto.request_dto import ChatRequest
+        
+        test_cases = [
+            {
+                "name": "Free 모드 - 기본 API Key 사용",
+                "request": ChatRequest(
+                    user_message="안녕하세요",
+                    max_tokens=get_test_max_tokens(),
+                    free_mode=True
+                ),
+                "expected_source": "default"
+            },
+            {
+                "name": "Free 모드 - 유효하지 않은 API Key 제공 (기본 Key로 폴백)",
+                "request": ChatRequest(
+                    user_message="안녕하세요",
+                    openai_api_key="invalid-key",
+                    free_mode=True,
+                    max_tokens=get_test_max_tokens()
+                ),
+                "expected_source": "default"
+            },
+            {
+                "name": "일반 모드 - 유효하지 않은 API Key (예외 발생 예상)",
+                "request": ChatRequest(
+                    user_message="안녕하세요",
+                    openai_api_key="invalid-key",
+                    free_mode=False,
+                    max_tokens=get_test_max_tokens()
+                ),
+                "expected_source": None  # 예외 발생 예상
+            }
+        ]
+        
+        for i, test_case in enumerate(test_cases):
+            print(f"\n--- 테스트 케이스 {i+1}: {test_case['name']} ---")
+            
+            try:
+                response = self.chat_service.process_chat_request(test_case["request"])
+                
+                print(f"응답: {response.response_text[:50]}...")
+                print(f"API Key 소스: {response.api_key_source}")
+                
+                if test_case["expected_source"]:
+                    self.assertEqual(response.api_key_source, test_case["expected_source"])
+                    print(f"[SUCCESS] {test_case['name']} 성공")
+                else:
+                    self.fail("예외가 발생해야 하는데 성공했습니다.")
+                    
+            except Exception as e:
+                if test_case["expected_source"] is None:
+                    print(f"[SUCCESS] {test_case['name']} - 예상된 예외 발생: {str(e)}")
+                else:
+                    print(f"[FAIL] {test_case['name']} - 예상치 못한 예외: {str(e)}")
+                    raise
 
 
 def run_scenario_tests():
@@ -361,12 +438,7 @@ def main():
     """메인 테스트 실행 함수"""
     print("시나리오 테스트 시작...")
     
-    # 환경 설정 확인
-    if not config.get("OPENAI_API_KEY"):
-        print("[ERROR] OPENAI_API_KEY가 설정되지 않았습니다.")
-        print("env.example 파일을 참고하여 .env 파일을 생성하세요.")
-        return
-    
+    # Free 모드로 테스트 가능하므로 API Key 체크 제거
     # 테스트 실행
     run_scenario_tests()
 

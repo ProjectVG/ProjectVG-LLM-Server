@@ -6,6 +6,8 @@
 - 메모리 매개변수 테스트
 - 지시사항 매개변수 테스트
 - MAX_TOKEN 제한 테스트
+- API Key 기능 테스트
+- Free 모드 테스트
 """
 
 import unittest
@@ -19,10 +21,6 @@ class TestUnit(unittest.TestCase):
     
     def setUp(self):
         """테스트 설정"""
-        api_key = config.get("OPENAI_API_KEY")
-        if not api_key:
-            self.skipTest("OPENAI_API_KEY가 설정되지 않았습니다.")
-        
         self.chat_service = ChatService()
     
     def test_chat_service_initialization(self):
@@ -44,7 +42,8 @@ class TestUnit(unittest.TestCase):
         
         request = ChatRequest(
             user_message="안녕하세요",
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -53,10 +52,12 @@ class TestUnit(unittest.TestCase):
         
         print(f"응답: {response.response_text}")
         print(f"응답 시간: {response.response_time:.2f}초")
+        print(f"API Key 소스: {response.api_key_source}")
         
         self.assertIsNotNone(response)
         self.assertIsNotNone(response.response_text)
         self.assertGreater(len(response.response_text), 0)
+        self.assertIsNotNone(response.api_key_source)
         
         print("[SUCCESS] 단순 채팅 요청 성공")
     
@@ -69,7 +70,8 @@ class TestUnit(unittest.TestCase):
         
         request = ChatRequest(
             user_message="안녕하세요",
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -94,7 +96,8 @@ class TestUnit(unittest.TestCase):
         request = ChatRequest(
             user_message="메모리에 뭐가 있어?",
             memory_context=["테스트 메모리"],
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         print(f"메모리: {request.memory_context}")
@@ -121,7 +124,8 @@ class TestUnit(unittest.TestCase):
         request = ChatRequest(
             user_message="파이썬이 뭐야?",
             instructions="한 문장으로 답해주세요.",
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
         )
         
         print(f"지시사항: {request.instructions}")
@@ -147,7 +151,8 @@ class TestUnit(unittest.TestCase):
         
         request = ChatRequest(
             user_message="파이썬의 모든 특징과 장점을 자세히 설명해주세요. 가능한 한 길고 상세하게 설명해주세요.",
-            max_tokens=16  # OpenAI API 최소값
+            max_tokens=16,  # OpenAI API 최소값
+            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -164,6 +169,50 @@ class TestUnit(unittest.TestCase):
         self.assertLessEqual(response_length, 50)
         
         print("[SUCCESS] MAX_TOKEN 제한 테스트 성공")
+    
+    def test_api_key_functionality(self):
+        """API Key 기능 테스트"""
+        print("\n7. API Key 기능 테스트")
+        print("-" * 40)
+        
+        from src.dto.request_dto import ChatRequest
+        
+        # 테스트에서는 Free 모드로 기본 API Key 사용
+        request = ChatRequest(
+            user_message="안녕하세요",
+            max_tokens=get_test_max_tokens(),
+            free_mode=True
+        )
+        
+        response = self.chat_service.process_chat_request(request)
+        
+        print(f"Free 모드 API Key 사용: {response.api_key_source}")
+        self.assertIsNotNone(response.api_key_source)
+        self.assertIn(response.api_key_source, ["default", "user_provided"])
+        
+        print("[SUCCESS] API Key 기능 테스트 성공")
+    
+    def test_free_mode_functionality(self):
+        """Free 모드 기능 테스트"""
+        print("\n8. Free 모드 기능 테스트")
+        print("-" * 40)
+        
+        from src.dto.request_dto import ChatRequest
+        
+        # Free 모드에서 유효하지 않은 API Key를 제공해도 기본 Key로 폴백
+        request = ChatRequest(
+            user_message="안녕하세요",
+            openai_api_key="invalid-key",
+            free_mode=True,
+            max_tokens=get_test_max_tokens()
+        )
+        
+        response = self.chat_service.process_chat_request(request)
+        
+        print(f"Free 모드 API Key 소스: {response.api_key_source}")
+        self.assertEqual(response.api_key_source, "default")
+        
+        print("[SUCCESS] Free 모드 기능 테스트 성공")
 
 
 def run_unit_tests():
