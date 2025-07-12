@@ -22,7 +22,7 @@
 - **GET /api/v1/system/disk** - 디스크 정보
 
 ### 기본 API
-- **GET /** - 서버 상태 확인
+- **GET /api/v1/** - 서버 상태 확인
 
 ---
 
@@ -57,7 +57,7 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 |------|------|------|--------|------|
 | `session_id` | string | ❌ | "" | 세션 ID (로깅 및 추적용) |
 | `system_message` | string | ❌ | "" | 추가 시스템 프롬프트 메시지 |
-| `user_message` | string | ✅ | - | 사용자 입력 메시지 |
+| `user_message` | string | ❌ | "" | 사용자 입력 메시지 |
 | `role` | string | ❌ | "" | AI 역할 설정 (시스템 프롬프트에 포함) |
 | `instructions` | string | ❌ | "" | 추가 지시사항 |
 | `conversation_history` | string[] | ❌ | [] | 최근 대화 내역 |
@@ -201,58 +201,28 @@ print(f"API Key 소스: {result['api_key_source']}")
     "python_version": "3.11.0"
   },
   "cpu": {
-    "usage_percent": 15.2,
+    "usage_percent": 25.5,
     "count": 8,
-    "frequency_mhz": 2400.0,
-    "frequency_max_mhz": 3200.0,
-    "load_average": [0.5, 0.3, 0.2]
+    "frequency": 2400.0
   },
   "memory": {
-    "total_gb": 16.0,
-    "available_gb": 8.0,
-    "used_gb": 8.0,
-    "usage_percent": 50.0,
-    "swap_total_gb": 2.0,
-    "swap_used_gb": 0.1,
-    "swap_usage_percent": 5.0
+    "total": 8589934592,
+    "available": 4294967296,
+    "used": 4294967296,
+    "usage_percent": 50.0
   },
   "disk": {
-    "total_gb": 500.0,
-    "used_gb": 200.0,
-    "free_gb": 300.0,
-    "usage_percent": 40.0,
-    "read_bytes": 1024000,
-    "write_bytes": 512000,
-    "read_count": 100,
-    "write_count": 50
-  },
-  "network": {
-    "bytes_sent": 1000000,
-    "bytes_recv": 2000000,
-    "packets_sent": 1000,
-    "packets_recv": 2000,
-    "active_connections": 150
-  },
-  "process": {
-    "pid": 1234,
-    "name": "python.exe",
-    "cpu_percent": 2.5,
-    "memory_mb": 128.5,
-    "memory_percent": 1.2,
-    "num_threads": 8,
-    "create_time": "2024-01-01T00:00:00"
-  },
-  "docker": {
-    "is_docker": false,
-    "container_id": null,
-    "image": null
+    "total": 107374182400,
+    "used": 53687091200,
+    "free": 53687091200,
+    "usage_percent": 50.0
   }
 }
 ```
 
 ### GET /api/v1/system/status
 
-간단한 시스템 상태(헬스체크용)를 반환합니다.
+간단한 헬스체크를 위한 엔드포인트입니다.
 
 #### Response
 
@@ -260,9 +230,7 @@ print(f"API Key 소스: {result['api_key_source']}")
 {
   "status": "healthy",
   "timestamp": "2024-01-01T00:00:00",
-  "cpu_usage": 15.2,
-  "memory_usage": 35.0,
-  "memory_available_gb": 5.2
+  "uptime": 3600.5
 }
 ```
 
@@ -276,11 +244,9 @@ CPU 정보만 반환합니다.
 {
   "timestamp": "2024-01-01T00:00:00",
   "cpu": {
-    "usage_percent": 15.2,
+    "usage_percent": 25.5,
     "count": 8,
-    "frequency_mhz": 2400.0,
-    "frequency_max_mhz": 3200.0,
-    "load_average": [0.5, 0.3, 0.2]
+    "frequency": 2400.0
   }
 }
 ```
@@ -295,13 +261,10 @@ CPU 정보만 반환합니다.
 {
   "timestamp": "2024-01-01T00:00:00",
   "memory": {
-    "total_gb": 16.0,
-    "available_gb": 8.0,
-    "used_gb": 8.0,
-    "usage_percent": 50.0,
-    "swap_total_gb": 2.0,
-    "swap_used_gb": 0.1,
-    "swap_usage_percent": 5.0
+    "total": 8589934592,
+    "available": 4294967296,
+    "used": 4294967296,
+    "usage_percent": 50.0
   }
 }
 ```
@@ -316,90 +279,22 @@ CPU 정보만 반환합니다.
 {
   "timestamp": "2024-01-01T00:00:00",
   "disk": {
-    "total_gb": 500.0,
-    "used_gb": 200.0,
-    "free_gb": 300.0,
-    "usage_percent": 40.0,
-    "read_bytes": 1024000,
-    "write_bytes": 512000,
-    "read_count": 100,
-    "write_count": 50
+    "total": 107374182400,
+    "used": 53687091200,
+    "free": 53687091200,
+    "usage_percent": 50.0
   }
 }
 ```
 
 ---
 
-## ⚠️ 에러 처리
-
-API는 체계적인 예외 처리 시스템을 사용하며, 다음과 같은 커스텀 예외들을 제공합니다:
-
-### 예외 타입
-
-1. **ValidationException** (400 Bad Request)
-   - 요청 데이터 검증 실패
-   - 필수 필드 누락, 잘못된 값 형식 등
-
-2. **ConfigurationException** (500 Internal Server Error)
-   - 시스템 설정 오류
-   - API 키 누락, 환경 변수 오류 등
-
-3. **ChatServiceException** (503 Service Unavailable)
-   - 채팅 서비스 처리 중 오류
-   - 비즈니스 로직 오류
-
-4. **OpenAIClientException** (503 Service Unavailable)
-   - OpenAI API 연결 오류
-   - API 호출 실패, 네트워크 오류 등
-
-### 에러 응답 형식
-
-모든 에러는 일관된 형식으로 응답됩니다:
-
-```json
-{
-  "session_id": "string",
-  "response_text": "",
-  "model": "",
-  "input_tokens": 0,
-  "output_tokens": 0,
-  "total_tokens_used": 0,
-  "output_format": "",
-  "created_at": "2024-01-01T00:00:00",
-  "temperature": null,
-  "instructions": null,
-  "response_time": 0.0,
-  "success": false,
-  "error_message": "오류 메시지",
-  "api_key_source": null
-}
-```
-
-### 검증 규칙
-
-- `user_message`: 필수 필드, 빈 문자열 불가
-- `max_tokens`: 0보다 커야 함
-- `temperature`: 0과 2 사이의 값이어야 함
-- `conversation_history`: 각 항목은 "role:content" 형식이어야 함
-- `openai_api_key`: 일반 모드에서는 유효한 API Key 필요
-
----
-
-## 📝 주의사항
-
-1. **토큰 제한**: OpenAI API의 토큰 제한을 고려하여 conversation_history 길이를 적절히 관리하세요.
-2. **메모리 관리**: memory_context 배열이 너무 길면 시스템 프롬프트가 복잡해질 수 있습니다.
-3. **히스토리 형식**: conversation_history 배열의 각 항목은 반드시 "role:content" 형식을 지켜야 합니다.
-4. **에러 처리**: 모든 API 호출은 적절한 에러 처리를 포함해야 합니다.
-5. **API Key 보안**: API Key는 안전하게 관리하고, 응답에는 실제 키값이 포함되지 않습니다.
-
----
-
 ## 🔗 관련 문서
 
-- **[API 테스트 예시](./test-examples.md)**: 다양한 언어별 API 사용 예시
-- **[시스템 모니터링 상세](./system-monitoring.md)**: 시스템 모니터링 API 상세 가이드
-- **[에러 처리 가이드](./error-handling.md)**: 에러 처리 및 디버깅 가이드
+- **[개요 및 시작 가이드](./../overview/README.md)**: 프로젝트 소개 및 기본 사용법
+- **[배포 가이드](./../deployment/README.md)**: 배포 및 운영 가이드
+- **[아키텍처 가이드](./../architecture/README.md)**: 프로젝트 구조 및 개발 가이드
+- **[테스트 가이드](./../testing/README.md)**: 테스트 및 품질 관리
 
 ---
 

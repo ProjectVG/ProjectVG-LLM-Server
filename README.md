@@ -27,10 +27,17 @@ pip install -r requirement.txt
 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 
 ```env
-OPENAI_API_KEY=sk-your-openai-api-key-here
+# 서버 설정
 SERVER_HOST=0.0.0.0
 SERVER_PORT=5601
+
+# OpenAI API 설정
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+
+# 로깅 설정
 LOG_LEVEL=INFO
+LOG_FILE=logs/app.log
 ```
 
 ### 3. 서버 실행
@@ -45,7 +52,7 @@ docker-compose up --build
 
 ### 4. 서버 확인
 
-- **서버 상태**: http://localhost:5601/
+- **서버 상태**: http://localhost:5601/api/v1/
 - **API 문서**: http://localhost:5601/docs
 - **시스템 정보**: http://localhost:5601/api/v1/system/status
 
@@ -81,7 +88,8 @@ response = requests.post("http://localhost:5601/api/v1/chat", json={
     "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
     "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
     "max_tokens": 1000,
-    "temperature": 0.7
+    "temperature": 0.7,
+    "free_mode": True
 })
 
 result = response.json()
@@ -111,6 +119,7 @@ LLM Server/
 ├── docker-compose.yml      # Docker Compose 설정
 ├── Dockerfile              # Docker 빌드 파일
 ├── requirement.txt         # Python 패키지 목록
+├── env.example            # 환경 변수 예시 파일
 ├── docs/                   # 📚 개발자 문서
 │   ├── overview/          # 개요 및 시작 가이드
 │   ├── api/              # API 문서
@@ -120,13 +129,27 @@ LLM Server/
 │   └── ...               # 기타 문서
 ├── src/
 │   ├── api/              # 🌐 API 라우터 및 문서
+│   │   ├── routes.py     # 채팅 API 라우터
+│   │   ├── system_routes.py # 시스템 모니터링 API
+│   │   └── exception_handlers.py # 예외 처리
 │   ├── config/           # ⚙️ 환경설정 관리
+│   │   └── config.py     # 설정 관리 클래스
 │   ├── dto/              # 📦 요청/응답 데이터 모델
+│   │   ├── request_dto.py # 요청 데이터 모델
+│   │   └── response_dto.py # 응답 데이터 모델
 │   ├── external/         # 🔗 외부 API 연동 (OpenAI 등)
+│   │   └── openai_client.py # OpenAI API 클라이언트
 │   ├── services/         # 🏢 비즈니스 로직 처리 서비스
+│   │   └── chat_service.py # 채팅 서비스
 │   ├── utils/            # 🛠️ 로깅, 시스템 정보 등 유틸리티
+│   │   ├── logger.py     # 로깅 유틸리티
+│   │   └── system_info.py # 시스템 정보 수집
 │   └── exceptions/       # ⚠️ 커스텀 예외 처리
+│       └── chat_exceptions.py # 채팅 관련 예외
 └── tests/                # 🧪 테스트 코드
+    ├── test_unit.py      # 단위 테스트
+    ├── test_scenarios.py # 시나리오 테스트
+    └── test_input.py     # 입력 검증 테스트
 ```
 
 ## 📚 문서
@@ -135,8 +158,8 @@ LLM Server/
 - **[개요 및 시작 가이드](./docs/overview/README.md)** - 프로젝트 소개 및 기본 사용법
 - **[API 문서](./docs/api/README.md)** - 상세한 API 명세 및 사용법
 - **[아키텍처 가이드](./docs/architecture/README.md)** - 프로젝트 구조 및 개발 가이드
-- **[배포 가이드](./docs/deployment/README.md)** - 운영 환경 배포 방법
-- **[테스트 가이드](./docs/testing/README.md)** - 테스트 코드 작성 및 실행
+- **[배포 가이드](./docs/deployment/README.md)** - 배포 및 운영 가이드
+- **[테스트 가이드](./docs/testing/README.md)** - 테스트 및 품질 관리
 
 ### API 테스트 예시
 - **[다양한 언어별 API 사용 예시](./docs/api/test-examples.md)** - Python, JavaScript, Java, C#, Go, PHP 등
@@ -148,9 +171,10 @@ LLM Server/
 python run_tests.py
 
 # 특정 테스트 실행
-pytest tests/test_unit.py
+python -m unittest tests.test_unit
 
-# 커버리지와 함께 실행
+# 커버리지와 함께 실행 (pytest 설치 필요)
+pip install pytest pytest-cov
 pytest --cov=src --cov-report=html
 ```
 

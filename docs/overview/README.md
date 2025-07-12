@@ -44,7 +44,7 @@
 ### 1. 환경 설정
 
 #### 필수 요구사항
-- Python 3.8 이상
+- Python 3.11 이상
 - OpenAI API Key
 - Docker (선택사항)
 
@@ -53,19 +53,17 @@
 `.env` 파일을 생성하고 다음 내용을 입력하세요:
 
 ```env
-# OpenAI API 설정
-OPENAI_API_KEY=sk-your-openai-api-key-here
-
 # 서버 설정
 SERVER_HOST=0.0.0.0
 SERVER_PORT=5601
 
+# OpenAI API 설정
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+
 # 로깅 설정
 LOG_LEVEL=INFO
 LOG_FILE=logs/app.log
-
-# 토큰 제한 (테스트용)
-TEST_MAX_TOKENS=100
 ```
 
 ### 2. 패키지 설치
@@ -100,7 +98,7 @@ docker-compose up -d
 ### 4. 서버 확인
 
 브라우저에서 다음 URL을 확인하세요:
-- **서버 상태**: http://localhost:5601/
+- **서버 상태**: http://localhost:5601/api/v1/
 - **API 문서**: http://localhost:5601/docs (FastAPI 자동 생성)
 
 ## 📝 기본 사용법
@@ -113,7 +111,8 @@ import requests
 # 기본 채팅 요청
 response = requests.post("http://localhost:5601/api/v1/chat", json={
     "session_id": "test_session",
-    "user_message": "안녕하세요! 파이썬에 대해 알려주세요."
+    "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
+    "free_mode": True
 })
 
 print(response.json())
@@ -144,6 +143,11 @@ system_info = response.json()
 
 print(f"CPU 사용률: {system_info['cpu']['usage_percent']}%")
 print(f"메모리 사용률: {system_info['memory']['usage_percent']}%")
+
+# 헬스체크
+response = requests.get("http://localhost:5601/api/v1/system/status")
+status = response.json()
+print(f"시스템 상태: {status['status']}")
 ```
 
 ## 🔧 개발 환경 설정
@@ -183,39 +187,39 @@ LLM Server/
 ├── docker-compose.yml      # Docker Compose 설정
 ├── Dockerfile              # Docker 빌드 파일
 ├── requirement.txt         # Python 패키지 목록
+├── env.example            # 환경 변수 예시 파일
 ├── docs/                   # 📚 개발자 문서
 ├── src/
 │   ├── api/               # 🌐 API 라우터 및 문서
+│   │   ├── routes.py      # 채팅 API 라우터
+│   │   ├── system_routes.py # 시스템 모니터링 API
+│   │   └── exception_handlers.py # 예외 처리
 │   ├── config/            # ⚙️ 환경설정 관리
+│   │   └── config.py      # 설정 관리 클래스
 │   ├── dto/               # 📦 요청/응답 데이터 모델
+│   │   ├── request_dto.py # 요청 데이터 모델
+│   │   └── response_dto.py # 응답 데이터 모델
 │   ├── external/          # 🔗 외부 API 연동 (OpenAI 등)
+│   │   └── openai_client.py # OpenAI API 클라이언트
 │   ├── services/          # 🏢 비즈니스 로직 처리 서비스
+│   │   └── chat_service.py # 채팅 서비스
 │   ├── utils/             # 🛠️ 로깅, 시스템 정보 등 유틸리티
+│   │   ├── logger.py      # 로깅 유틸리티
+│   │   └── system_info.py # 시스템 정보 수집
 │   └── exceptions/        # ⚠️ 커스텀 예외 처리
+│       └── chat_exceptions.py # 채팅 관련 예외
 └── tests/                 # 🧪 테스트 코드
+    ├── test_unit.py       # 단위 테스트
+    ├── test_scenarios.py  # 시나리오 테스트
+    └── test_input.py      # 입력 검증 테스트
 ```
 
 ## 🎯 다음 단계
 
 - **[API 문서](./../api/README.md)**: 상세한 API 명세 및 사용법
+- **[배포 가이드](./../deployment/README.md)**: 배포 및 운영 가이드
 - **[아키텍처 가이드](./../architecture/README.md)**: 프로젝트 구조 및 개발 가이드
-- **[배포 가이드](./../deployment/README.md)**: 운영 환경 배포 방법
-- **[테스트 가이드](./../testing/README.md)**: 테스트 코드 작성 및 실행
-
-## 🤝 기여하기
-
-프로젝트에 기여하고 싶으시다면:
-
-1. 이슈를 생성하여 개선사항을 제안
-2. Fork 후 Pull Request 생성
-3. 테스트 코드 작성 및 실행
-4. 코드 리뷰 참여
-
-## 📞 지원
-
-- **문서**: 이 문서와 관련 문서들을 참조하세요
-- **이슈**: GitHub Issues를 통해 버그 리포트 및 기능 요청
-- **토론**: GitHub Discussions를 통한 질문 및 토론
+- **[테스트 가이드](./../testing/README.md)**: 테스트 및 품질 관리
 
 ---
 

@@ -13,7 +13,7 @@
 
 ### 시스템 요구사항
 
-- **Python**: 3.8 이상
+- **Python**: 3.11 이상
 - **메모리**: 최소 512MB (권장 1GB 이상)
 - **디스크**: 최소 100MB 여유 공간
 - **네트워크**: OpenAI API 접근 가능
@@ -49,30 +49,28 @@ pip install pytest black flake8
 
 #### `.env` 파일 생성
 ```env
-# OpenAI API 설정
-OPENAI_API_KEY=sk-your-openai-api-key-here
-
 # 서버 설정
 SERVER_HOST=0.0.0.0
 SERVER_PORT=5601
 
+# OpenAI API 설정
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+
 # 로깅 설정
 LOG_LEVEL=INFO
 LOG_FILE=logs/app.log
-
-# 토큰 제한 (테스트용)
-TEST_MAX_TOKENS=100
 ```
 
 #### 환경 변수 직접 설정
 ```bash
 # Windows
-set OPENAI_API_KEY=sk-your-openai-api-key-here
+set OPENAI_API_KEY=your_openai_api_key_here
 set SERVER_HOST=0.0.0.0
 set SERVER_PORT=5601
 
 # Linux/Mac
-export OPENAI_API_KEY=sk-your-openai-api-key-here
+export OPENAI_API_KEY=your_openai_api_key_here
 export SERVER_HOST=0.0.0.0
 export SERVER_PORT=5601
 ```
@@ -175,7 +173,7 @@ docker tag llm-server:v1.0 llm-server:latest
 docker run -d \
   --name llm-server \
   -p 5601:5601 \
-  -e OPENAI_API_KEY=sk-your-api-key \
+  -e OPENAI_API_KEY=your-api-key \
   llm-server
 
 # 컨테이너 상태 확인
@@ -188,7 +186,7 @@ docker logs llm-server
 #### 환경 변수 파일 사용
 ```bash
 # .env 파일 생성
-echo "OPENAI_API_KEY=sk-your-api-key" > .env
+echo "OPENAI_API_KEY=your-api-key" > .env
 echo "SERVER_HOST=0.0.0.0" >> .env
 echo "SERVER_PORT=5601" >> .env
 
@@ -211,7 +209,7 @@ docker run -d \
   -p 5601:5601 \
   -v $(pwd)/logs:/app/logs \
   -v $(pwd)/.env:/app/.env \
-  -e OPENAI_API_KEY=sk-your-api-key \
+  -e OPENAI_API_KEY=your-api-key \
   llm-server
 ```
 
@@ -227,11 +225,8 @@ services:
     container_name: llm-server
     ports:
       - "5601:5601"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=5601
-      - LOG_LEVEL=INFO
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
     restart: unless-stopped
@@ -268,11 +263,8 @@ services:
     container_name: llm-server-prod
     ports:
       - "5601:5601"
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=5601
-      - LOG_LEVEL=WARNING
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
     restart: always
@@ -312,7 +304,7 @@ git clone https://github.com/your-repo/llm-server.git
 cd llm-server
 
 # 환경 변수 설정
-echo "OPENAI_API_KEY=sk-your-api-key" > .env
+echo "OPENAI_API_KEY=your-api-key" > .env
 
 # Docker Compose 실행
 sudo docker-compose up -d
@@ -341,7 +333,7 @@ sudo docker-compose up -d
       "environment": [
         {
           "name": "OPENAI_API_KEY",
-          "value": "sk-your-api-key"
+          "value": "your-api-key"
         }
       ],
       "logConfiguration": {
@@ -374,7 +366,7 @@ gcloud run deploy llm-server \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars OPENAI_API_KEY=sk-your-api-key
+  --set-env-vars OPENAI_API_KEY=your-api-key
 ```
 
 ### 3. Azure 배포
@@ -394,7 +386,7 @@ az container create \
   --image your-registry.azurecr.io/llm-server:latest \
   --dns-name-label llm-server \
   --ports 5601 \
-  --environment-variables OPENAI_API_KEY=sk-your-api-key
+  --environment-variables OPENAI_API_KEY=your-api-key
 ```
 
 ---
@@ -413,6 +405,12 @@ curl http://localhost:5601/api/v1/system/status
 
 # CPU 사용률 모니터링
 watch -n 5 'curl -s http://localhost:5601/api/v1/system/cpu | jq ".cpu.usage_percent"'
+
+# 메모리 정보 확인
+curl http://localhost:5601/api/v1/system/memory
+
+# 디스크 정보 확인
+curl http://localhost:5601/api/v1/system/disk
 ```
 
 #### 로그 모니터링
@@ -498,13 +496,13 @@ docker build --no-cache -t llm-server .
 #### 환경 변수 보안
 ```bash
 # 민감한 정보 암호화
-echo "OPENAI_API_KEY=$(echo -n 'sk-your-api-key' | base64)" >> .env
+echo "OPENAI_API_KEY=$(echo -n 'your-api-key' | base64)" >> .env
 
 # 환경 변수 파일 권한 설정
 chmod 600 .env
 
 # Docker secrets 사용 (Swarm 모드)
-echo "sk-your-api-key" | docker secret create openai_api_key -
+echo "your-api-key" | docker secret create openai_api_key -
 ```
 
 #### 네트워크 보안
@@ -677,7 +675,7 @@ def cache_response(key, ttl=300):
 - **[개요 및 시작 가이드](./../overview/README.md)**: 프로젝트 소개 및 기본 사용법
 - **[API 문서](./../api/README.md)**: API 명세 및 사용법
 - **[아키텍처 가이드](./../architecture/README.md)**: 프로젝트 구조 및 개발 가이드
-- **[문제 해결 가이드](./../troubleshooting/README.md)**: 일반적인 문제 해결 방법
+- **[테스트 가이드](./../testing/README.md)**: 테스트 및 품질 관리
 
 ---
 
