@@ -51,19 +51,19 @@ class OpenAIClient:
         
         if use_user_api_key:
             if api_key and self._validate_api_key(api_key):
-                logger.info("사용자 API Key 사용")
+                logger.debug("사용자 API Key 사용")
                 return api_key, "user_provided"
             elif default_key:
-                logger.info("사용자 API Key가 유효하지 않아 기본 API Key 사용")
+                logger.debug("사용자 API Key가 유효하지 않아 기본 API Key 사용")
                 return default_key, "default"
             else:
                 raise ConfigurationException("유효한 API Key를 찾을 수 없습니다.", config_key="OPENAI_API_KEY")
         
         if default_key:
-            logger.info("기본 API Key 사용")
+            logger.debug("기본 API Key 사용")
             return default_key, "default"
         elif api_key and self._validate_api_key(api_key):
-            logger.info("기본 API Key가 없어 사용자 API Key 사용")
+            logger.debug("기본 API Key가 없어 사용자 API Key 사용")
             return api_key, "user_provided"
         else:
             raise ConfigurationException("유효한 OpenAI API Key가 설정되지 않았습니다.", config_key="OPENAI_API_KEY")
@@ -97,7 +97,7 @@ class OpenAIClient:
             OpenAIClientException: OpenAI API 호출 중 오류 발생 시
             ConfigurationException: API Key 설정 오류 시
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         
         # API Key 선택 및 검증
         selected_api_key, api_key_source = self._select_api_key(api_key, use_user_api_key)
@@ -116,7 +116,10 @@ class OpenAIClient:
                 max_output_tokens=max_tokens
             )
 
-            response_time = time.time() - start_time
+            response_time = time.perf_counter() - start_time
+            if response_time < 0:
+                logger.warning(f"음수 응답 시간 감지: {response_time:.2f}s, 0으로 조정")
+                response_time = 0.0
             logger.debug(f"OpenAI API 응답 완료 (ID: {response.id}, 시간: {response_time:.2f}s)")
             
             return response, response_time, api_key_source

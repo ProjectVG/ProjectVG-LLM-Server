@@ -396,9 +396,9 @@ def performance_test():
     for i, test_case in enumerate(test_cases, 1):
         test_case["use_user_api_key"] = False
         
-        start_time = time.time()
+        start_time = time.perf_counter()
         response = requests.post(CHAT_ENDPOINT, json=test_case, headers=headers)
-        end_time = time.time()
+        end_time = time.perf_counter()
         
         response_time = end_time - start_time
         total_time += response_time

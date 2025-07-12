@@ -80,7 +80,7 @@ class ChatService:
             ValidationException: 요청 데이터 검증 실패 시
         """
         try:
-            logger.info(f"채팅 요청 처리 시작: {request.user_message[:50]}...")
+            logger.debug(f"채팅 요청 처리 시작")
             
             # 요청 데이터 검증
             self._validate_request(request)
