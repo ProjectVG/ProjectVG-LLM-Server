@@ -35,6 +35,9 @@ class ChatResponse:
     success: bool = True
     error_message: Optional[str] = None
     
+    # API Key 사용 정보
+    api_key_source: Optional[str] = None
+    
     def print_response_info(self):
         """응답 정보 출력"""
         print(f"""
@@ -50,6 +53,7 @@ Token Usage:
 Response Time: {self.response_time:.2f}s
 Created At: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")}
 Success: {self.success}
+API Key Source: {self.api_key_source}
         """)
     
     def to_dict(self) -> dict:
@@ -67,11 +71,12 @@ Success: {self.success}
             "instructions": self.instructions,
             "response_time": self.response_time,
             "success": self.success,
-            "error_message": self.error_message
+            "error_message": self.error_message,
+            "api_key_source": self.api_key_source
         }
     
     @classmethod
-    def from_openai_response(cls, openai_response, session_id: str = "", response_time: float = None):
+    def from_openai_response(cls, openai_response, session_id: str = "", response_time: float = None, api_key_source: str = None):
         """OpenAI Response에서 ChatResponse 생성"""
         return cls(
             session_id=session_id,
@@ -84,7 +89,8 @@ Success: {self.success}
             created_at=datetime.fromtimestamp(openai_response.created_at),
             temperature=openai_response.temperature,
             response_time=response_time,
-            success=True
+            success=True,
+            api_key_source=api_key_source
         )
     
     @classmethod

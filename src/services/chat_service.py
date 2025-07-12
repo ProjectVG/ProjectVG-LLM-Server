@@ -94,8 +94,10 @@ class ChatService:
             messages = [system_message] + conversation_history + [user_message]
             
             # OpenAI API 호출
-            openai_response, response_time = self.openai_client.create_completion(
+            openai_response, response_time, api_key_source = self.openai_client.generate_response(
                 messages=messages,
+                api_key=request.openai_api_key,
+                free_mode=request.free_mode,
                 model=request.model,
                 instructions=request.instructions,
                 max_tokens=request.max_tokens,
@@ -106,10 +108,11 @@ class ChatService:
             response = ChatResponse.from_openai_response(
                 openai_response=openai_response,
                 session_id=request.session_id,
-                response_time=response_time
+                response_time=response_time,
+                api_key_source=api_key_source
             )
             
-            logger.info(f"채팅 응답 처리 완료: {response.response_time:.2f}s")
+            logger.info(f"채팅 응답 처리 완료: {response.response_time:.2f}s (API Key: {api_key_source})")
             return response
             
         except (ValidationException, OpenAIClientException):

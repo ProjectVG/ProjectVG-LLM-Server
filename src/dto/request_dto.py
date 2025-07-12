@@ -14,6 +14,8 @@ class ChatRequest(BaseModel):
     max_tokens: Optional[int] = 1000
     temperature: Optional[float] = 0.7
     model: Optional[str] = "gpt-4o-mini"
+    openai_api_key: Optional[str] = ""
+    free_mode: Optional[bool] = False
     
     def get_system_message(self) -> str:
         """시스템 메시지를 조합하여 반환"""
