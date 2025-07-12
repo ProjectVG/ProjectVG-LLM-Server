@@ -52,7 +52,8 @@ def app():
                 user_message=user_input,
                 memory_context=memory,
                 role=role,
-                conversation_history=history
+                conversation_history=history,
+                free_mode=True,
             )
             
             try:
