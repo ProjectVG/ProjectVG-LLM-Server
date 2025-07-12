@@ -1,168 +1,70 @@
-# LLM Server 아키텍처 및 개발 가이드
+# 아키텍처 및 개발 가이드
 
-이 문서는 LLM Server의 아키텍처 설계, 개발 가이드라인, 그리고 핵심 컴포넌트에 대한 상세한 설명을 제공합니다.
+## 개요
 
-## 🏗️ 아키텍처 개요
+LLM Server는 FastAPI 기반의 모듈화된 아키텍처를 채택하여 확장성과 유지보수성을 고려한 설계를 제공합니다. 이 문서는 프로젝트의 구조, 컴포넌트 간의 관계, 그리고 개발 가이드라인을 설명합니다.
 
-### 전체 구조
+## 프로젝트 구조
 
 ```
-LLM Server
-├── 🌐 API Layer (FastAPI)
-│   ├── routes.py          # 채팅 API 라우터
-│   ├── system_routes.py   # 시스템 모니터링 API
-│   └── exception_handlers.py # 전역 예외 처리
-├── 🏢 Service Layer
-│   └── services/
-│       └── chat_service.py # 채팅 비즈니스 로직
-├── 🔗 External Layer
-│   └── external/
-│       └── openai_client.py # OpenAI API 연동
-├── 📦 DTO Layer
-│   └── dto/
-│       ├── request_dto.py  # 요청 데이터 모델
-│       └── response_dto.py # 응답 데이터 모델
-├── ⚙️ Config Layer
-│   └── config/
-│       └── config.py       # 환경 설정 관리
-├── 🛠️ Utils Layer
-│   └── utils/
-│       ├── logger.py       # 로깅 유틸리티
-│       └── system_info.py  # 시스템 정보 수집
-└── ⚠️ Exception Layer
-    └── exceptions/
-        └── chat_exceptions.py # 커스텀 예외 클래스
+LLM Server/
+├── app.py                 # FastAPI 애플리케이션 진입점
+├── docker-compose.yml     # Docker Compose 설정
+├── Dockerfile            # Docker 이미지 빌드 설정
+├── env.example           # 환경 변수 예시
+├── requirement.txt       # Python 의존성
+├── run_tests.py         # 테스트 실행 스크립트
+├── src/                 # 소스 코드
+│   ├── api/            # API 라우터
+│   │   ├── routes.py   # 채팅 API 엔드포인트
+│   │   └── system_routes.py # 시스템 모니터링 API
+│   ├── config/         # 설정 관리
+│   │   └── config.py   # 환경 변수 및 설정
+│   ├── dto/            # 데이터 전송 객체
+│   │   ├── request_dto.py  # 요청 DTO
+│   │   └── response_dto.py # 응답 DTO
+│   ├── external/       # 외부 서비스 연동
+│   │   └── openai_client.py # OpenAI API 클라이언트
+│   ├── services/       # 비즈니스 로직
+│   │   └── chat_service.py  # 채팅 서비스
+│   ├── utils/          # 유틸리티
+│   │   ├── logger.py   # 로깅 설정
+│   │   └── system_info.py # 시스템 정보 수집
+│   └── exceptions/     # 커스텀 예외
+│       └── chat_exceptions.py # 채팅 관련 예외
+├── tests/              # 테스트 코드
+│   ├── test_unit.py    # 단위 테스트
+│   ├── test_scenarios.py # 시나리오 테스트
+│   └── test_input.py   # 테스트 입력 데이터
+└── docs/               # 문서
+    ├── overview/       # 개요 및 시작 가이드
+    ├── api/           # API 문서
+    ├── architecture/  # 아키텍처 가이드
+    ├── deployment/    # 배포 가이드
+    └── testing/       # 테스트 가이드
 ```
 
-### 아키텍처 원칙
-
-1. **계층 분리 (Layered Architecture)**
-   - API Layer: HTTP 요청/응답 처리
-   - Service Layer: 비즈니스 로직
-   - External Layer: 외부 API 연동
-   - DTO Layer: 데이터 전송 객체
-
-2. **관심사 분리 (Separation of Concerns)**
-   - 각 모듈은 단일 책임을 가짐
-   - 의존성 최소화
-   - 테스트 용이성 확보
-
-3. **의존성 주입 (Dependency Injection)**
-   - 느슨한 결합 (Loose Coupling)
-   - 테스트 가능한 구조
-   - 확장성 향상
-
----
-
-## 📁 프로젝트 구조 상세
+## 핵심 컴포넌트
 
 ### 1. API Layer (`src/api/`)
 
-#### `routes.py`
-```python
-# 채팅 API 엔드포인트 정의
-@router.post("/chat", response_model=ChatResponse)
-async def chat_with_ai(request: ChatRequest):
-    # 요청 검증 및 서비스 호출
-    return chat_service.process_chat_request(request)
-```
+FastAPI 라우터를 통해 HTTP 요청을 처리합니다.
 
-#### `system_routes.py`
-```python
-# 시스템 모니터링 API 엔드포인트
-@router.get("/info")
-async def get_system_info():
-    # 시스템 정보 수집 및 반환
-    return SystemInfoCollector.get_system_info()
-```
+#### 주요 파일:
+- `routes.py`: 채팅 API 엔드포인트 (`/api/v1/chat`)
+- `system_routes.py`: 시스템 모니터링 API
 
-#### `exception_handlers.py`
-```python
-# 전역 예외 처리기
-@app.exception_handler(ValidationException)
-async def validation_exception_handler(request, exc):
-    # 검증 오류 응답 생성
-    return create_error_response(exc)
-```
+#### 특징:
+- RESTful API 설계
+- 자동 문서 생성 (Swagger/OpenAPI)
+- 요청/응답 검증 (Pydantic)
+- 글로벌 예외 처리
 
-### 2. Service Layer (`src/services/`)
+### 2. DTO Layer (`src/dto/`)
 
-#### `chat_service.py`
-```python
-class ChatService:
-    def __init__(self):
-        self.openai_client = OpenAIClient()
-    
-    def process_chat_request(self, request: ChatRequest) -> ChatResponse:
-        # 1. 요청 검증
-        self._validate_request(request)
-        
-        # 2. 메시지 구성
-        system_message = self._create_system_message(request)
-        conversation_history = self._format_conversation_history(request.conversation_history or [])
-        user_message = self._create_user_message(request.user_message)
-        
-        # 3. OpenAI API 호출
-        openai_response, response_time, api_key_source = self.openai_client.generate_response(
-            messages=[system_message] + conversation_history + [user_message],
-            api_key=request.openai_api_key,
-            free_mode=request.free_mode,
-            model=request.model,
-            instructions=request.instructions,
-            max_tokens=request.max_tokens,
-            temperature=request.temperature
-        )
-        
-        # 4. 응답 생성
-        return ChatResponse.from_openai_response(
-            openai_response=openai_response,
-            session_id=request.session_id,
-            response_time=response_time,
-            api_key_source=api_key_source
-        )
-```
+데이터 전송 객체를 정의하여 API 계층과 비즈니스 로직 계층 간의 데이터 교환을 담당합니다.
 
-### 3. External Layer (`src/external/`)
-
-#### `openai_client.py`
-```python
-class OpenAIClient:
-    def __init__(self, api_key: str = None):
-        self.api_key = api_key or self._load_api_key()
-        if self.api_key:
-            self.client = OpenAI(api_key=self.api_key)
-        else:
-            self.client = None
-    
-    def generate_response(
-        self,
-        messages: list[dict],
-        api_key: str = None,
-        free_mode: bool = False,
-        model: str = DEFAULT_MODEL,
-        instructions: str = "",
-        max_tokens: int = DEFAULT_MAX_TOKENS,
-        temperature: float = DEFAULT_TEMPERATURE
-    ) -> tuple[Response, float, str]:
-        # API Key 선택 및 검증
-        selected_api_key, api_key_source = self._select_api_key(api_key, free_mode)
-        
-        # OpenAI API 호출
-        client = OpenAI(api_key=selected_api_key)
-        response = client.responses.create(
-            model=model,
-            input=messages,
-            instructions=instructions,
-            temperature=temperature,
-            max_output_tokens=max_tokens
-        )
-        
-        return response, response_time, api_key_source
-```
-
-### 4. DTO Layer (`src/dto/`)
-
-#### `request_dto.py`
+#### ChatRequest (요청 DTO)
 ```python
 class ChatRequest(BaseModel):
     session_id: Optional[str] = ""
@@ -176,375 +78,248 @@ class ChatRequest(BaseModel):
     temperature: Optional[float] = 0.7
     model: Optional[str] = "gpt-4o-mini"
     openai_api_key: Optional[str] = ""
-    free_mode: Optional[bool] = False
-    
-    def get_system_message(self) -> str:
-        """시스템 메시지를 조합하여 반환"""
-        system_prompt = f"""
-{self.system_message}
-
-{self._format_role()}
-
-{self._format_memory()}
-
-{self._format_instructions()}
-        """
-        return system_prompt.strip()
+    use_user_api_key: Optional[bool] = False
 ```
 
-#### `response_dto.py`
+#### ChatResponse (응답 DTO)
 ```python
-@dataclass
-class ChatResponse:
-    session_id: str
-    response_text: str
-    model: str
-    input_tokens: int
-    output_tokens: int
-    total_tokens_used: int
-    output_format: str
-    created_at: datetime
-    temperature: Optional[float] = None
-    instructions: Optional[str] = None
-    response_time: Optional[float] = None
-    success: bool = True
-    error_message: Optional[str] = None
+class ChatResponse(BaseModel):
+    success: bool
+    response_text: Optional[str] = None
+    session_id: Optional[str] = None
+    response_time: float = 0.0
     api_key_source: Optional[str] = None
-    
-    @classmethod
-    def from_openai_response(cls, openai_response, session_id: str = "", response_time: float = None, api_key_source: str = None):
-        """OpenAI Response에서 ChatResponse 생성"""
-        return cls(
-            session_id=session_id,
-            response_text=openai_response.output_text,
-            model=openai_response.model,
-            input_tokens=openai_response.usage.input_tokens,
-            output_tokens=openai_response.usage.output_tokens,
-            total_tokens_used=openai_response.usage.total_tokens,
-            output_format=openai_response.text.format.type,
-            created_at=datetime.fromtimestamp(openai_response.created_at),
-            temperature=openai_response.temperature,
-            response_time=response_time,
-            success=True,
-            api_key_source=api_key_source
-        )
+    model_used: Optional[str] = None
+    tokens_used: Optional[dict] = None
+    error: Optional[dict] = None
 ```
 
-### 5. Config Layer (`src/config/`)
+### 3. Service Layer (`src/services/`)
 
-#### `config.py`
-```python
-class Config:
-    """설정 관리 클래스"""
-    
-    SERVER_PORT = "5601"
-    OPENAI_API_KEY = ""
-    LOG_LEVEL = "INFO"
-    LOG_FILE = "logs/app.log"
-    DEFAULT_MODEL = "gpt-4o-mini"
-    DEFAULT_TEMPERATURE = "0.7"
-    DEFAULT_MAX_TOKENS = "1000"
-    
-    def __init__(self):
-        self._load_env_file()
-        self._load_from_env()
-    
-    def get(self, key: str, default: Optional[str] = None) -> str:
-        """설정 값에서 값을 가져옴"""
-        return getattr(self, key, default)
-    
-    def get_int(self, key: str, default: int = 0) -> int:
-        """설정 값에서 정수 값을 가져옴"""
-        value = self.get(key)
-        try:
-            return int(value) if value else default
-        except (ValueError, TypeError):
-            return default
-```
+비즈니스 로직을 처리하는 핵심 계층입니다.
 
----
-
-## 🔧 핵심 컴포넌트 분석
-
-### 1. 채팅 서비스 (ChatService)
-
-#### 책임
-- 채팅 요청 처리
-- 메시지 구성
-- OpenAI API 호출
-- 응답 생성
-
-#### 주요 메서드
+#### ChatService
 ```python
 class ChatService:
+    def __init__(self):
+        self.openai_client = OpenAIClient()
+    
     def process_chat_request(self, request: ChatRequest) -> ChatResponse:
-        """채팅 요청을 처리하고 응답을 생성합니다."""
-        
-    def _validate_request(self, request: ChatRequest) -> None:
-        """요청 데이터 검증"""
-        
-    def _create_system_message(self, request: ChatRequest) -> dict:
-        """시스템 메시지 생성"""
-        
-    def _format_conversation_history(self, history: list[str]) -> list[dict]:
-        """대화 히스토리 포맷팅"""
+        # 1. 요청 데이터 검증
+        # 2. 메시지 구성
+        # 3. OpenAI API 호출
+        # 4. 응답 생성 및 반환
 ```
 
-### 2. OpenAI 클라이언트 (OpenAIClient)
+#### 주요 기능:
+- 요청 데이터 검증
+- 시스템 메시지 생성
+- 대화 히스토리 처리
+- OpenAI API 호출
+- 응답 데이터 변환
 
-#### 책임
-- OpenAI API 통신
-- API Key 관리
-- 응답 처리
+### 4. External Layer (`src/external/`)
 
-#### 주요 메서드
+외부 서비스와의 연동을 담당합니다.
+
+#### OpenAIClient
 ```python
 class OpenAIClient:
     def generate_response(
         self,
         messages: list[dict],
         api_key: str = None,
-        free_mode: bool = False,
+        use_user_api_key: bool = False,
         model: str = DEFAULT_MODEL,
         instructions: str = "",
         max_tokens: int = DEFAULT_MAX_TOKENS,
         temperature: float = DEFAULT_TEMPERATURE
     ) -> tuple[Response, float, str]:
-        """OpenAI API에 메시지 전송하여 응답 생성"""
-        
-    def _select_api_key(self, api_key: str = None, free_mode: bool = False) -> tuple[str, str]:
-        """API Key 선택 및 검증"""
-        
-    def _validate_api_key(self, api_key: str) -> bool:
-        """API Key 유효성 검증"""
 ```
 
-### 3. 예외 처리 시스템
+#### API Key 관리:
+- **기본 모드** (`use_user_api_key: false`): 서버 관리 API Key 사용
+- **사용자 API Key 모드** (`use_user_api_key: true`): 사용자 제공 API Key 우선 사용
 
-#### 커스텀 예외 클래스
+### 5. Configuration (`src/config/`)
+
+환경 변수와 설정을 관리합니다.
+
+#### Config 클래스
 ```python
-class ValidationException(Exception):
-    """요청 데이터 검증 실패 시 발생하는 예외"""
-    
-class ConfigurationException(Exception):
-    """설정 오류 시 발생하는 예외"""
-    
-class ChatServiceException(Exception):
-    """채팅 서비스 처리 중 오류 시 발생하는 예외"""
-    
-class OpenAIClientException(Exception):
-    """OpenAI API 호출 중 오류 시 발생하는 예외"""
+class Config:
+    OPENAI_API_KEY: str = ""
+    LOG_LEVEL: str = "INFO"
+    MAX_TOKENS: int = 1000
+    DEFAULT_TEMPERATURE: float = 0.7
+    DEFAULT_MODEL: str = "gpt-4o-mini"
 ```
 
-#### 전역 예외 처리기
-```python
-@app.exception_handler(ValidationException)
-async def validation_exception_handler(request, exc):
-    """검증 예외 처리"""
-    
-@app.exception_handler(OpenAIClientException)
-async def openai_client_exception_handler(request, exc):
-    """OpenAI 클라이언트 예외 처리"""
-    
-@app.exception_handler(ChatServiceException)
-async def chat_service_exception_handler(request, exc):
-    """채팅 서비스 예외 처리"""
-```
+### 6. Utilities (`src/utils/`)
 
----
+공통 유틸리티 기능을 제공합니다.
 
-## 🔄 데이터 플로우
+#### Logger
+- 구조화된 로깅
+- 로그 레벨 설정
+- 파일 및 콘솔 출력
 
-### 1. 채팅 요청 처리 플로우
+#### SystemInfo
+- CPU, 메모리, 디스크 정보 수집
+- 시스템 모니터링 API 지원
 
-```
-1. HTTP 요청 수신 (POST /api/v1/chat)
-   ↓
-2. ChatRequest DTO 생성 및 검증
-   ↓
-3. ChatService.process_chat_request() 호출
-   ↓
-4. 요청 데이터 검증 (_validate_request)
-   ↓
-5. 메시지 구성 (_create_system_message, _format_conversation_history)
-   ↓
-6. OpenAI API 호출 (OpenAIClient.generate_response)
-   ↓
-7. 응답 생성 (ChatResponse.from_openai_response)
-   ↓
-8. HTTP 응답 반환
-```
+### 7. Exceptions (`src/exceptions/`)
 
-### 2. API Key 처리 플로우
+커스텀 예외 클래스를 정의하여 일관된 오류 처리를 제공합니다.
+
+#### 주요 예외:
+- `ValidationException`: 데이터 검증 오류
+- `OpenAIClientException`: OpenAI API 오류
+- `ChatServiceException`: 채팅 서비스 오류
+- `ConfigurationException`: 설정 오류
+
+## 데이터 흐름
+
+### 1. 채팅 요청 처리 흐름
 
 ```
-1. 요청에서 API Key 확인
-   ↓
-2. Free 모드 여부 확인
-   ↓
-3. API Key 선택 (_select_api_key)
-   ├─ Free 모드: 사용자 Key → 기본 Key
-   └─ 일반 모드: 사용자 Key만 허용
-   ↓
-4. API Key 유효성 검증 (_validate_api_key)
-   ↓
-5. OpenAI API 호출
-   ↓
-6. API Key 소스 정보 응답에 포함
+HTTP Request → API Router → DTO Validation → Service → OpenAI Client → Response
 ```
 
----
+1. **HTTP 요청 수신**: FastAPI가 `/api/v1/chat` 엔드포인트로 요청 수신
+2. **DTO 검증**: Pydantic이 요청 데이터 자동 검증
+3. **서비스 호출**: ChatService가 비즈니스 로직 처리
+4. **OpenAI API 호출**: OpenAIClient가 외부 API 호출
+5. **응답 생성**: 결과를 ChatResponse DTO로 변환하여 반환
 
-## 🛠️ 개발 가이드라인
+### 2. API Key 선택 로직
 
-### 1. 코드 스타일
-
-#### Python 코딩 컨벤션
-- **PEP 8** 준수
-- **Type Hints** 사용
-- **Docstring** 작성
-- **명확한 변수명** 사용
-
-#### 예시
-```python
-def process_chat_request(self, request: ChatRequest) -> ChatResponse:
-    """
-    채팅 요청을 처리하여 응답을 반환
-    
-    Args:
-        request: 채팅 요청 데이터
-        
-    Returns:
-        ChatResponse: 채팅 응답 데이터
-        
-    Raises:
-        ChatServiceException: 채팅 서비스 처리 중 오류 발생 시
-        ValidationException: 요청 데이터 검증 실패 시
-    """
 ```
+사용자 요청 → API Key 선택 → 검증 → 사용
+```
+
+1. **기본 모드** (`use_user_api_key: false`):
+   - 서버 관리 API Key 사용
+   - 사용자 API Key가 제공되어도 무시
+
+2. **사용자 API Key 모드** (`use_user_api_key: true`):
+   - 사용자 제공 API Key 우선 사용
+   - 유효하지 않으면 서버 관리 API Key로 폴백
+
+## 개발 가이드라인
+
+### 1. 코드 구조
+
+#### 모듈화 원칙
+- 단일 책임 원칙 (SRP) 준수
+- 의존성 주입 패턴 사용
+- 인터페이스와 구현 분리
+
+#### 네이밍 컨벤션
+- 클래스: PascalCase (`ChatService`)
+- 함수/변수: snake_case (`process_chat_request`)
+- 상수: UPPER_SNAKE_CASE (`DEFAULT_MODEL`)
 
 ### 2. 에러 처리
 
-#### 예외 처리 원칙
-1. **구체적인 예외 사용**
-2. **적절한 로깅**
-3. **사용자 친화적 메시지**
-4. **디버깅 정보 포함**
-
-#### 예시
+#### 계층별 예외 처리
 ```python
-try:
-    response = await self.openai_client.generate_response(messages)
-except OpenAIClientException as e:
-    logger.error(f"OpenAI API 호출 실패: {e}")
-    raise ChatServiceException(f"AI 서비스 연결 오류: {e.message}")
-except Exception as e:
-    logger.error(f"예상치 못한 오류: {e}")
-    raise ChatServiceException(f"서비스 처리 중 오류: {str(e)}")
+# API Layer
+@router.post("/chat")
+async def chat_with_ai(request: ChatRequest):
+    try:
+        response = chat_service.process_chat_request(request)
+        return response
+    except ValidationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except OpenAIClientException as e:
+        raise HTTPException(status_code=503, detail=str(e))
+```
+
+#### 커스텀 예외 사용
+```python
+class ValidationException(Exception):
+    def __init__(self, message: str, field: str = None, value: str = None):
+        self.message = message
+        self.field = field
+        self.value = value
 ```
 
 ### 3. 로깅
 
-#### 로깅 레벨
-- **DEBUG**: 상세한 디버깅 정보
-- **INFO**: 일반적인 정보
-- **WARNING**: 경고 메시지
-- **ERROR**: 오류 메시지
-- **CRITICAL**: 심각한 오류
-
-#### 예시
+#### 구조화된 로깅
 ```python
 logger.info(f"채팅 요청 처리 시작: {request.user_message[:50]}...")
-logger.debug(f"OpenAI API 요청 시작 (model: {model}, temperature: {temperature})")
-logger.error(f"OpenAI API 호출 중 오류 발생: {str(e)}")
+logger.error(f"OpenAI API 호출 중 오류: {str(e)}")
 ```
+
+#### 로그 레벨 활용
+- `DEBUG`: 상세한 디버깅 정보
+- `INFO`: 일반적인 처리 정보
+- `WARNING`: 경고 상황
+- `ERROR`: 오류 상황
 
 ### 4. 테스트
 
 #### 테스트 구조
-```
-tests/
-├── test_unit.py          # 단위 테스트
-├── test_scenarios.py     # 시나리오 테스트
-└── test_input.py         # 입력 검증 테스트
+- **단위 테스트**: 개별 컴포넌트 테스트
+- **시나리오 테스트**: 전체 흐름 테스트
+- **통합 테스트**: API 엔드포인트 테스트
+
+#### 테스트 실행
+```bash
+python run_tests.py
 ```
 
-#### 테스트 예시
-```python
-def test_chat_service_process_chat_request():
-    """채팅 서비스 요청 처리 테스트"""
-    service = ChatService()
-    request = ChatRequest(
-        user_message="테스트 메시지",
-        session_id="test_session"
-    )
-    
-    response = service.process_chat_request(request)
-    
-    assert response.success is True
-    assert response.response_text is not None
-    assert response.session_id == "test_session"
-```
+## 확장성 고려사항
+
+### 1. 모듈 확장
+- 새로운 AI 모델 추가 시 `OpenAIClient` 확장
+- 새로운 기능 추가 시 `ChatService` 확장
+- 새로운 API 추가 시 라우터 추가
+
+### 2. 설정 관리
+- 환경별 설정 분리 (개발/테스트/운영)
+- 동적 설정 변경 지원
+- 설정 검증 강화
+
+### 3. 성능 최적화
+- 비동기 처리 활용
+- 캐싱 전략 수립
+- 데이터베이스 연동 고려
+
+## 보안 고려사항
+
+### 1. API Key 관리
+- 환경 변수를 통한 안전한 저장
+- API Key 검증 및 폴백 로직
+- 사용량 모니터링
+
+### 2. 입력 검증
+- Pydantic을 통한 자동 검증
+- SQL Injection 방지
+- XSS 공격 방지
+
+### 3. 로깅 보안
+- 민감한 정보 로깅 제외
+- 로그 레벨 적절한 설정
+- 로그 파일 접근 권한 관리
+
+## 모니터링 및 운영
+
+### 1. 헬스체크
+- `/api/v1/system/status` 엔드포인트
+- 시스템 리소스 모니터링
+- API 응답 시간 측정
+
+### 2. 로깅
+- 구조화된 로그 형식
+- 로그 레벨별 관리
+- 로그 파일 로테이션
+
+### 3. 에러 추적
+- 상세한 에러 메시지
+- 스택 트레이스 기록
+- 에러 통계 수집
 
 ---
-
-## 📈 성능 최적화
-
-### 1. 메모리 관리
-
-#### 가비지 컬렉션
-```python
-import gc
-
-# 주기적 가비지 컬렉션
-gc.collect()
-
-# 메모리 사용량 모니터링
-import psutil
-process = psutil.Process()
-memory_usage = process.memory_info().rss / 1024 / 1024
-logger.info(f"메모리 사용량: {memory_usage:.2f} MB")
-```
-
-### 2. 비동기 처리
-
-#### 동시 요청 제한
-```python
-import asyncio
-
-# 세마포어를 사용한 동시 요청 제한
-semaphore = asyncio.Semaphore(10)
-
-async def process_request(request):
-    async with semaphore:
-        return await chat_service.process_chat_request(request)
-```
-
-### 3. 캐싱
-
-#### 응답 캐싱
-```python
-import functools
-import time
-
-@functools.lru_cache(maxsize=1000)
-def cache_response(key: str, ttl: int = 300):
-    """응답 캐싱"""
-    # 캐시 로직 구현
-    pass
-```
-
----
-
-## 🔗 관련 문서
-
-- **[개요 및 시작 가이드](./../overview/README.md)**: 프로젝트 소개 및 기본 사용법
-- **[API 문서](./../api/README.md)**: API 명세 및 사용법
-- **[배포 가이드](./../deployment/README.md)**: 배포 및 운영 가이드
-- **[테스트 가이드](./../testing/README.md)**: 테스트 및 품질 관리
-
----
-
-**문서 버전**: 1.0  
-**최종 업데이트**: 2024년 12월  
-**작성자**: LLM Server 개발팀 

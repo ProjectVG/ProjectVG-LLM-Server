@@ -1,228 +1,309 @@
-# LLM Server 개요 및 시작 가이드
+# LLM Server - 개요 및 시작 가이드
 
-## 📋 프로젝트 소개
+## 프로젝트 소개
 
-**LLM Server**는 FastAPI와 OpenAI API를 활용하여 대화형 AI 챗봇 기능을 제공하는 서버 프로젝트입니다. 한국어 환경에 최적화되어 있으며, 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트 등 다양한 입력을 조합해 유연한 챗봇 응답을 생성할 수 있습니다.
+LLM Server는 OpenAI API를 활용한 채팅 서비스를 제공하는 FastAPI 기반의 웹 서버입니다. 사용자 친화적인 API를 통해 AI와의 대화를 지원하며, 다양한 매개변수를 통해 대화를 커스터마이징할 수 있습니다.
 
-### 🎯 주요 목표
+## 주요 기능
 
-- **대화형 AI 서비스**: OpenAI GPT 모델을 활용한 자연스러운 대화 기능
-- **컨텍스트 관리**: 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트 통합
-- **API Key 관리**: 사용자 제공 API Key 지원 및 Free 모드 기능
-- **시스템 모니터링**: 실시간 시스템 상태 및 성능 모니터링
-- **확장 가능한 아키텍처**: 모듈화된 구조로 유지보수성 향상
+### 🤖 AI 채팅
+- OpenAI GPT 모델을 활용한 자연어 대화
+- 다양한 모델 지원 (gpt-4o-mini, gpt-4o 등)
+- 실시간 응답 생성
 
-## ✨ 주요 특징
+### 🎭 역할 기반 대화
+- AI의 역할을 설정하여 특정 컨텍스트에서 대화
+- 예: 프로그래밍 선생님, 친근한 어시스턴트 등
 
-### 🤖 AI 챗봇 기능
-- **OpenAI API 연동**: GPT-4o-mini, GPT-4 등 다양한 모델 지원
-- **컨텍스트 관리**: 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트 조합
-- **역할 기반 응답**: AI의 역할을 설정하여 일관된 응답 생성
-- **토큰 최적화**: 효율적인 토큰 사용으로 비용 절약
+### 💾 메모리 컨텍스트
+- 대화 중 중요한 정보를 메모리에 저장
+- 이전 대화 내용을 참조하여 연속성 있는 대화 지원
+
+### 📝 지시사항 시스템
+- AI에게 특정 형식이나 스타일로 응답하도록 지시
+- 예: "간단하게 설명해주세요", "한 문장으로 답해주세요"
 
 ### 🔑 API Key 관리
-- **사용자 제공 API Key**: 개별 사용자가 자신의 API Key 사용 가능
-- **Free 모드**: API Key 실패 시 기본 Key로 폴백
-- **Key 검증**: API Key 유효성 실시간 검증
-- **보안**: 응답에 실제 API Key 노출하지 않음
+- 서버 관리 API Key와 사용자 제공 API Key 지원
+- 유연한 API Key 선택 및 폴백 시스템
 
 ### 📊 시스템 모니터링
-- **실시간 모니터링**: CPU, 메모리, 디스크, 네트워크 사용량
-- **헬스체크**: 시스템 상태 확인 엔드포인트
-- **프로세스 정보**: 서버 프로세스 상세 정보
-- **Docker 지원**: 컨테이너 환경 정보 제공
+- CPU, 메모리, 디스크 사용량 모니터링
+- 실시간 시스템 상태 확인
 
-### 🏗️ 기술 스택
-- **FastAPI**: 고성능 Python 웹 프레임워크
-- **OpenAI API**: 최신 LLM 모델 활용
-- **Pydantic**: 데이터 검증 및 직렬화
-- **Docker**: 컨테이너화 지원
-- **한국어 지원**: 한국어 주석 및 에러 메시지
-
-## 🚀 빠른 시작
+## 빠른 시작
 
 ### 1. 환경 설정
 
 #### 필수 요구사항
-- Python 3.11 이상
+- Python 3.8 이상
 - OpenAI API Key
-- Docker (선택사항)
 
-#### 환경 변수 설정
-
-`.env` 파일을 생성하고 다음 내용을 입력하세요:
-
-```env
-# 서버 설정
-SERVER_HOST=0.0.0.0
-SERVER_PORT=5601
-
-# OpenAI API 설정
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4o-mini
-
-# 로깅 설정
-LOG_LEVEL=INFO
-LOG_FILE=logs/app.log
-```
-
-### 2. 패키지 설치
-
+#### 설치
 ```bash
-# 가상환경 생성 (권장)
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 또는
-venv\Scripts\activate     # Windows
+# 저장소 클론
+git clone <repository-url>
+cd LLM-Server
 
-# 패키지 설치
+# 가상환경 생성 및 활성화
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 의존성 설치
 pip install -r requirement.txt
 ```
 
-### 3. 서버 실행
-
-#### 로컬 실행
+#### 환경 변수 설정
 ```bash
-python app.py
+# .env 파일 생성
+cp env.example .env
+
+# .env 파일 편집
+OPENAI_API_KEY=your-openai-api-key-here
+LOG_LEVEL=INFO
 ```
 
-#### Docker 실행
-```bash
-# 이미지 빌드 및 실행
-docker-compose up --build
+### 2. 서버 실행
 
-# 백그라운드 실행
+#### 개발 모드
+```bash
+# FastAPI 개발 서버 실행
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Docker를 사용한 실행
+```bash
+# Docker Compose로 실행
 docker-compose up -d
+
+# 로그 확인
+docker-compose logs -f
 ```
 
-### 4. 서버 확인
+### 3. API 테스트
 
-브라우저에서 다음 URL을 확인하세요:
-- **서버 상태**: http://localhost:5601/api/v1/
-- **API 문서**: http://localhost:5601/docs (FastAPI 자동 생성)
+#### 기본 채팅 요청
+```bash
+curl -X POST "http://localhost:8000/api/v1/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_message": "안녕하세요!",
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+```
 
-## 📝 기본 사용법
-
-### 1. 간단한 채팅 요청
-
+#### Python 클라이언트 예제
 ```python
 import requests
 
-# 기본 채팅 요청
-response = requests.post("http://localhost:5601/api/v1/chat", json={
-    "session_id": "test_session",
-    "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
-    "free_mode": True
-})
+url = "http://localhost:8000/api/v1/chat"
+data = {
+    "user_message": "파이썬이 뭐야?",
+    "role": "당신은 친근한 프로그래밍 선생님입니다.",
+    "instructions": "초보자에게 이해하기 쉽게 설명해주세요.",
+    "max_tokens": 500,
+    "use_user_api_key": false
+}
 
-print(response.json())
-```
-
-### 2. Free 모드 사용
-
-```python
-# Free 모드로 사용자 API Key 사용
-response = requests.post("http://localhost:5601/api/v1/chat", json={
-    "session_id": "test_session",
-    "user_message": "파이썬에 대해 알려주세요",
-    "openai_api_key": "sk-your-api-key",
-    "free_mode": True
-})
-
+response = requests.post(url, json=data)
 result = response.json()
-print(f"응답: {result['response_text']}")
+
+print(f"AI 응답: {result['response_text']}")
+print(f"응답 시간: {result['response_time']:.2f}초")
 print(f"API Key 소스: {result['api_key_source']}")
 ```
 
-### 3. 시스템 모니터링
+## API 사용법
 
-```python
-# 시스템 정보 확인
-response = requests.get("http://localhost:5601/api/v1/system/info")
-system_info = response.json()
+### 기본 채팅
 
-print(f"CPU 사용률: {system_info['cpu']['usage_percent']}%")
-print(f"메모리 사용률: {system_info['memory']['usage_percent']}%")
+가장 간단한 채팅 요청입니다.
 
-# 헬스체크
-response = requests.get("http://localhost:5601/api/v1/system/status")
-status = response.json()
-print(f"시스템 상태: {status['status']}")
+```json
+{
+  "user_message": "안녕하세요!",
+  "use_user_api_key": false
+}
 ```
 
-## 🔧 개발 환경 설정
+### 역할 기반 채팅
 
-### 1. 개발 도구 설치
+AI에게 특정 역할을 부여하여 대화합니다.
 
+```json
+{
+  "user_message": "프로그래밍을 가르쳐주세요",
+  "role": "당신은 경험이 풍부한 프로그래밍 멘토입니다.",
+  "instructions": "초보자에게 친근하고 격려하는 톤으로 답해주세요.",
+  "use_user_api_key": false
+}
+```
+
+### 메모리 컨텍스트 활용
+
+이전 대화 내용을 기억하여 연속성 있는 대화를 지원합니다.
+
+```json
+{
+  "user_message": "내가 좋아하는 색깔이 뭐였지?",
+  "memory_context": [
+    "사용자가 파란색을 좋아한다고 언급함",
+    "사용자는 간단한 설명을 선호함"
+  ],
+  "use_user_api_key": false
+}
+```
+
+### 사용자 API Key 사용
+
+자신의 OpenAI API Key를 사용하여 요청합니다.
+
+```json
+{
+  "user_message": "안녕하세요",
+  "openai_api_key": "sk-your-api-key-here",
+  "use_user_api_key": true
+}
+```
+
+## API Key 관리
+
+### 기본 모드 (기본값)
+- 서버에서 관리하는 API Key 사용
+- `use_user_api_key: false` 또는 생략
+- 사용자가 API Key를 제공하지 않아도 동작
+
+### 사용자 API Key 모드
+- 사용자가 제공한 API Key 우선 사용
+- `use_user_api_key: true`로 설정
+- 유효하지 않은 경우 서버 관리 API Key로 폴백
+
+## 시스템 모니터링
+
+### 헬스체크
 ```bash
-# 개발용 패키지 설치
-pip install -r requirement.txt
+curl http://localhost:8000/api/v1/system/status
+```
 
-# 테스트 실행
+### 시스템 정보
+```bash
+curl http://localhost:8000/api/v1/system/info
+```
+
+### CPU 정보
+```bash
+curl http://localhost:8000/api/v1/system/cpu
+```
+
+### 메모리 정보
+```bash
+curl http://localhost:8000/api/v1/system/memory
+```
+
+### 디스크 정보
+```bash
+curl http://localhost:8000/api/v1/system/disk
+```
+
+## 테스트
+
+### 전체 테스트 실행
+```bash
 python run_tests.py
 ```
 
-### 2. 코드 포맷팅
-
+### 개별 테스트 실행
 ```bash
-# Black을 사용한 코드 포맷팅
-black src/ tests/
+# 단위 테스트
+python -m pytest tests/test_unit.py -v
 
-# isort를 사용한 import 정렬
-isort src/ tests/
+# 시나리오 테스트
+python -m pytest tests/test_scenarios.py -v
 ```
 
-### 3. 린팅
+## 배포
 
+### Docker를 사용한 배포
 ```bash
-# flake8을 사용한 코드 검사
-flake8 src/ tests/
+# 이미지 빌드
+docker build -t llm-server .
+
+# 컨테이너 실행
+docker run -d -p 8000:8000 --env-file .env llm-server
 ```
 
-## 📁 프로젝트 구조
+### Docker Compose를 사용한 배포
+```bash
+# 서비스 시작
+docker-compose up -d
 
-```
-LLM Server/
-├── app.py                  # FastAPI 진입점
-├── docker-compose.yml      # Docker Compose 설정
-├── Dockerfile              # Docker 빌드 파일
-├── requirement.txt         # Python 패키지 목록
-├── env.example            # 환경 변수 예시 파일
-├── docs/                   # 📚 개발자 문서
-├── src/
-│   ├── api/               # 🌐 API 라우터 및 문서
-│   │   ├── routes.py      # 채팅 API 라우터
-│   │   ├── system_routes.py # 시스템 모니터링 API
-│   │   └── exception_handlers.py # 예외 처리
-│   ├── config/            # ⚙️ 환경설정 관리
-│   │   └── config.py      # 설정 관리 클래스
-│   ├── dto/               # 📦 요청/응답 데이터 모델
-│   │   ├── request_dto.py # 요청 데이터 모델
-│   │   └── response_dto.py # 응답 데이터 모델
-│   ├── external/          # 🔗 외부 API 연동 (OpenAI 등)
-│   │   └── openai_client.py # OpenAI API 클라이언트
-│   ├── services/          # 🏢 비즈니스 로직 처리 서비스
-│   │   └── chat_service.py # 채팅 서비스
-│   ├── utils/             # 🛠️ 로깅, 시스템 정보 등 유틸리티
-│   │   ├── logger.py      # 로깅 유틸리티
-│   │   └── system_info.py # 시스템 정보 수집
-│   └── exceptions/        # ⚠️ 커스텀 예외 처리
-│       └── chat_exceptions.py # 채팅 관련 예외
-└── tests/                 # 🧪 테스트 코드
-    ├── test_unit.py       # 단위 테스트
-    ├── test_scenarios.py  # 시나리오 테스트
-    └── test_input.py      # 입력 검증 테스트
+# 서비스 중지
+docker-compose down
 ```
 
-## 🎯 다음 단계
+## 문제 해결
 
-- **[API 문서](./../api/README.md)**: 상세한 API 명세 및 사용법
-- **[배포 가이드](./../deployment/README.md)**: 배포 및 운영 가이드
+### 일반적인 문제
+
+#### 1. OpenAI API Key 오류
+```
+Error: 유효한 OpenAI API Key가 설정되지 않았습니다.
+```
+**해결방법:**
+- `.env` 파일에 올바른 API Key 설정
+- 환경 변수 `OPENAI_API_KEY` 확인
+
+#### 2. 포트 충돌
+```
+Error: Address already in use
+```
+**해결방법:**
+- 다른 포트 사용: `uvicorn app:app --port 8001`
+- 기존 프로세스 종료
+
+#### 3. 의존성 오류
+```
+Error: ModuleNotFoundError
+```
+**해결방법:**
+- 가상환경 활성화 확인
+- `pip install -r requirement.txt` 재실행
+
+### 로그 확인
+
+#### 개발 모드
+```bash
+# 콘솔에서 직접 확인
+uvicorn app:app --reload
+```
+
+#### Docker 모드
+```bash
+# 컨테이너 로그 확인
+docker-compose logs -f
+
+# 특정 컨테이너 로그
+docker logs <container-name>
+```
+
+## 문서
+
+- **[API 문서](./../api/README.md)**: 상세한 API 명세
 - **[아키텍처 가이드](./../architecture/README.md)**: 프로젝트 구조 및 개발 가이드
+- **[배포 가이드](./../deployment/README.md)**: 배포 및 운영 가이드
 - **[테스트 가이드](./../testing/README.md)**: 테스트 및 품질 관리
 
----
+## 기여하기
 
-**문서 버전**: 1.0  
-**최종 업데이트**: 2024년 12월  
-**작성자**: LLM Server 개발팀 
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+
+---

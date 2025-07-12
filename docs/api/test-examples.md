@@ -1,828 +1,663 @@
-# API 테스트 예시
+# API 테스트 예제
 
-이 문서는 다양한 프로그래밍 언어를 사용한 LLM Server API 테스트 예시를 제공합니다.
+이 문서는 LLM Server API를 테스트하기 위한 다양한 예제를 제공합니다.
 
-## 📋 목차
+## 기본 테스트 환경 설정
 
-- [Python](#python)
-- [JavaScript (Node.js)](#javascript-nodejs)
-- [cURL](#curl)
-- [Java](#java)
-- [C#](#c)
-- [Go](#go)
-- [PHP](#php)
-
----
-
-## 🐍 Python
-
-### 기본 설치
-
-```bash
-pip install requests
-```
-
-### 1. 기본 채팅 요청
-
+### Python 환경 설정
 ```python
 import requests
 import json
+import time
 
+# 기본 설정
+BASE_URL = "http://localhost:8000"
+CHAT_ENDPOINT = f"{BASE_URL}/api/v1/chat"
+
+# 헤더 설정
+headers = {
+    "Content-Type": "application/json"
+}
+```
+
+### cURL 환경 설정
+```bash
+# 기본 URL 설정
+BASE_URL="http://localhost:8000"
+CHAT_ENDPOINT="$BASE_URL/api/v1/chat"
+
+# 헤더 설정
+HEADERS="-H 'Content-Type: application/json'"
+```
+
+## 기본 채팅 테스트
+
+### Python 예제
+```python
 def basic_chat():
-    url = "http://localhost:5601/api/v1/chat"
-    
-    payload = {
-        "session_id": "test_session_001",
-        "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
-        "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
-        "max_tokens": 1000,
-        "temperature": 0.7
+    """기본 채팅 테스트"""
+    data = {
+        "user_message": "안녕하세요!",
+        "max_tokens": 500,
+        "use_user_api_key": False
     }
     
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
         result = response.json()
-        print(f"응답: {result['response_text']}")
-        print(f"토큰 사용량: {result['total_tokens_used']}")
-        print(f"응답 시간: {result['response_time']:.2f}초")
-        
-    except requests.exceptions.RequestException as e:
-        print(f"API 호출 오류: {e}")
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"⏱️ 응답 시간: {result['response_time']:.2f}초")
+        print(f"🔑 API Key 소스: {result['api_key_source']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
 
-if __name__ == "__main__":
-    basic_chat()
+# 테스트 실행
+basic_chat()
 ```
 
-### 2. Free 모드 사용
-
-```python
-def free_mode_chat():
-    url = "http://localhost:5601/api/v1/chat"
-    
-    payload = {
-        "session_id": "test_session_002",
-        "user_message": "머신러닝에 대해 설명해주세요",
-        "openai_api_key": "sk-your-api-key-here",  # 선택사항
-        "free_mode": True,
-        "conversation_history": [
-            "user:안녕하세요",
-            "assistant:안녕하세요! 무엇을 도와드릴까요?",
-            "user:AI에 대해 궁금해요"
-        ],
-        "memory_context": ["사용자는 AI에 관심이 많은 개발자입니다"],
-        "max_tokens": 800,
-        "temperature": 0.8
-    }
-    
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        
-        result = response.json()
-        print(f"응답: {result['response_text']}")
-        print(f"API Key 소스: {result['api_key_source']}")
-        print(f"성공 여부: {result['success']}")
-        
-    except requests.exceptions.RequestException as e:
-        print(f"API 호출 오류: {e}")
-
-free_mode_chat()
-```
-
-### 3. 시스템 모니터링
-
-```python
-def system_monitoring():
-    base_url = "http://localhost:5601/api/v1/system"
-    
-    # 전체 시스템 정보
-    try:
-        response = requests.get(f"{base_url}/info")
-        response.raise_for_status()
-        system_info = response.json()
-        
-        print("=== 시스템 정보 ===")
-        print(f"플랫폼: {system_info['system']['platform']}")
-        print(f"CPU 사용률: {system_info['cpu']['usage_percent']}%")
-        print(f"메모리 사용률: {system_info['memory']['usage_percent']}%")
-        print(f"디스크 사용률: {system_info['disk']['usage_percent']}%")
-        
-    except requests.exceptions.RequestException as e:
-        print(f"시스템 정보 조회 오류: {e}")
-    
-    # 헬스체크
-    try:
-        response = requests.get(f"{base_url}/status")
-        response.raise_for_status()
-        status = response.json()
-        
-        print(f"\n=== 헬스체크 ===")
-        print(f"상태: {status['status']}")
-        print(f"CPU 사용률: {status['cpu_usage']}%")
-        print(f"메모리 사용률: {status['memory_usage']}%")
-        
-    except requests.exceptions.RequestException as e:
-        print(f"헬스체크 오류: {e}")
-
-system_monitoring()
-```
-
-### 4. 에러 처리 예시
-
-```python
-def error_handling_example():
-    url = "http://localhost:5601/api/v1/chat"
-    
-    # 잘못된 요청 예시
-    invalid_payload = {
-        "user_message": "",  # 빈 메시지 (오류 발생)
-        "max_tokens": -1,    # 잘못된 토큰 수 (오류 발생)
-        "temperature": 3.0   # 잘못된 temperature (오류 발생)
-    }
-    
-    try:
-        response = requests.post(url, json=invalid_payload)
-        
-        if response.status_code == 400:
-            error_data = response.json()
-            print(f"검증 오류: {error_data['error_message']}")
-        elif response.status_code == 422:
-            print("요청 데이터 형식 오류")
-        else:
-            print(f"예상치 못한 오류: {response.status_code}")
-            
-    except requests.exceptions.RequestException as e:
-        print(f"네트워크 오류: {e}")
-
-error_handling_example()
-```
-
----
-
-## 🟨 JavaScript (Node.js)
-
-### 기본 설치
-
+### cURL 예제
 ```bash
-npm install axios
-```
-
-### 1. 기본 채팅 요청
-
-```javascript
-const axios = require('axios');
-
-async function basicChat() {
-    const url = 'http://localhost:5601/api/v1/chat';
-    
-    const payload = {
-        session_id: 'test_session_001',
-        user_message: '안녕하세요! 자바스크립트에 대해 알려주세요.',
-        role: '당신은 친근하고 유머러스한 AI 어시스턴트입니다.',
-        max_tokens: 1000,
-        temperature: 0.7
-    };
-    
-    try {
-        const response = await axios.post(url, payload);
-        const result = response.data;
-        
-        console.log(`응답: ${result.response_text}`);
-        console.log(`토큰 사용량: ${result.total_tokens_used}`);
-        console.log(`응답 시간: ${result.response_time.toFixed(2)}초`);
-        
-    } catch (error) {
-        if (error.response) {
-            console.error('API 오류:', error.response.data);
-        } else {
-            console.error('네트워크 오류:', error.message);
-        }
-    }
-}
-
-basicChat();
-```
-
-### 2. Free 모드 사용
-
-```javascript
-async function freeModeChat() {
-    const url = 'http://localhost:5601/api/v1/chat';
-    
-    const payload = {
-        session_id: 'test_session_002',
-        user_message: '웹 개발에 대해 설명해주세요',
-        openai_api_key: 'sk-your-api-key-here', // 선택사항
-        free_mode: true,
-        conversation_history: [
-            'user:안녕하세요',
-            'assistant:안녕하세요! 무엇을 도와드릴까요?',
-            'user:웹 개발에 관심이 있어요'
-        ],
-        memory_context: ['사용자는 웹 개발을 배우고 싶어하는 초보자입니다'],
-        max_tokens: 800,
-        temperature: 0.8
-    };
-    
-    try {
-        const response = await axios.post(url, payload);
-        const result = response.data;
-        
-        console.log(`응답: ${result.response_text}`);
-        console.log(`API Key 소스: ${result.api_key_source}`);
-        console.log(`성공 여부: ${result.success}`);
-        
-    } catch (error) {
-        console.error('오류:', error.response?.data || error.message);
-    }
-}
-
-freeModeChat();
-```
-
-### 3. 시스템 모니터링
-
-```javascript
-async function systemMonitoring() {
-    const baseUrl = 'http://localhost:5601/api/v1/system';
-    
-    try {
-        // 전체 시스템 정보
-        const systemResponse = await axios.get(`${baseUrl}/info`);
-        const systemInfo = systemResponse.data;
-        
-        console.log('=== 시스템 정보 ===');
-        console.log(`플랫폼: ${systemInfo.system.platform}`);
-        console.log(`CPU 사용률: ${systemInfo.cpu.usage_percent}%`);
-        console.log(`메모리 사용률: ${systemInfo.memory.usage_percent}%`);
-        console.log(`디스크 사용률: ${systemInfo.disk.usage_percent}%`);
-        
-        // 헬스체크
-        const statusResponse = await axios.get(`${baseUrl}/status`);
-        const status = statusResponse.data;
-        
-        console.log('\n=== 헬스체크 ===');
-        console.log(`상태: ${status.status}`);
-        console.log(`CPU 사용률: ${status.cpu_usage}%`);
-        console.log(`메모리 사용률: ${status.memory_usage}%`);
-        
-    } catch (error) {
-        console.error('시스템 모니터링 오류:', error.response?.data || error.message);
-    }
-}
-
-systemMonitoring();
-```
-
----
-
-## 🔗 cURL
-
-### 1. 기본 채팅 요청
-
-```bash
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
-    "session_id": "test_session_001",
-    "user_message": "안녕하세요! 리눅스에 대해 알려주세요.",
-    "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
-    "max_tokens": 1000,
-    "temperature": 0.7
+    "user_message": "안녕하세요!",
+    "max_tokens": 500,
+    "use_user_api_key": false
   }'
 ```
 
-### 2. Free 모드 사용
+## 역할 기반 채팅 테스트
 
+### Python 예제
+```python
+def role_based_chat():
+    """역할 기반 채팅 테스트"""
+    data = {
+        "user_message": "파이썬을 가르쳐주세요",
+        "role": "당신은 친근하고 이해하기 쉬운 프로그래밍 선생님입니다.",
+        "instructions": "초보자에게 적합한 설명을 해주세요.",
+        "max_tokens": 500,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"🎭 역할: {data['role']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
+
+# 테스트 실행
+role_based_chat()
+```
+
+### cURL 예제
 ```bash
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
-    "session_id": "test_session_002",
-    "user_message": "데이터베이스에 대해 설명해주세요",
-    "openai_api_key": "sk-your-api-key-here",
-    "free_mode": true,
-    "conversation_history": [
-      "user:안녕하세요",
-      "assistant:안녕하세요! 무엇을 도와드릴까요?",
-      "user:데이터베이스에 관심이 있어요"
+    "user_message": "파이썬을 가르쳐주세요",
+    "role": "당신은 친근하고 이해하기 쉬운 프로그래밍 선생님입니다.",
+    "instructions": "초보자에게 적합한 설명을 해주세요.",
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+```
+
+## 메모리 컨텍스트 테스트
+
+### Python 예제
+```python
+def memory_context_chat():
+    """메모리 컨텍스트 테스트"""
+    data = {
+        "user_message": "내가 좋아하는 색깔이 뭐였지?",
+        "memory_context": [
+            "사용자가 파란색을 좋아한다고 언급함",
+            "사용자는 간단한 설명을 선호함"
+        ],
+        "max_tokens": 500,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"💾 메모리: {data['memory_context']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
+
+# 테스트 실행
+memory_context_chat()
+```
+
+### cURL 예제
+```bash
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "내가 좋아하는 색깔이 뭐였지?",
+    "memory_context": [
+      "사용자가 파란색을 좋아한다고 언급함",
+      "사용자는 간단한 설명을 선호함"
     ],
-    "memory_context": ["사용자는 데이터베이스를 배우고 싶어하는 개발자입니다"],
-    "max_tokens": 800,
-    "temperature": 0.8
+    "max_tokens": 500,
+    "use_user_api_key": false
   }'
 ```
 
-### 3. 시스템 모니터링
+## 대화 히스토리 테스트
 
-```bash
-# 전체 시스템 정보
-curl "http://localhost:5601/api/v1/system/info"
+### Python 예제
+```python
+def conversation_history_chat():
+    """대화 히스토리 테스트"""
+    data = {
+        "user_message": "그럼 자바는 어떤가요?",
+        "conversation_history": [
+            "user: 파이썬에 대해 설명해주세요",
+            "assistant: 파이썬은 간단하고 읽기 쉬운 프로그래밍 언어입니다."
+        ],
+        "max_tokens": 500,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"📝 대화 히스토리: {data['conversation_history']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
 
-# 헬스체크
-curl "http://localhost:5601/api/v1/system/status"
-
-# CPU 정보만
-curl "http://localhost:5601/api/v1/system/cpu"
-
-# 메모리 정보만
-curl "http://localhost:5601/api/v1/system/memory"
-
-# 디스크 정보만
-curl "http://localhost:5601/api/v1/system/disk"
+# 테스트 실행
+conversation_history_chat()
 ```
 
-### 4. 에러 테스트
-
+### cURL 예제
 ```bash
-# 잘못된 요청 (빈 메시지)
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
-    "user_message": "",
-    "max_tokens": -1,
-    "temperature": 3.0
+    "user_message": "그럼 자바는 어떤가요?",
+    "conversation_history": [
+      "user: 파이썬에 대해 설명해주세요",
+      "assistant: 파이썬은 간단하고 읽기 쉬운 프로그래밍 언어입니다."
+    ],
+    "max_tokens": 500,
+    "use_user_api_key": false
   }'
 ```
 
----
+## 사용자 API Key 테스트
 
-## ☕ Java
+### Python 예제
+```python
+def user_api_key_chat():
+    """사용자 API Key 테스트"""
+    data = {
+        "user_message": "안녕하세요",
+        "openai_api_key": "sk-your-api-key-here",
+        "use_user_api_key": True,
+        "max_tokens": 500
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"🔑 API Key 소스: {result['api_key_source']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
 
-### Maven 의존성
-
-```xml
-<dependency>
-    <groupId>com.squareup.okhttp3</groupId>
-    <artifactId>okhttp</artifactId>
-    <version>4.9.3</version>
-</dependency>
-<dependency>
-    <groupId>com.google.code.gson</groupId>
-    <artifactId>gson</artifactId>
-    <version>2.8.9</version>
-</dependency>
+# 테스트 실행
+user_api_key_chat()
 ```
 
-### 1. 기본 채팅 요청
-
-```java
-import com.google.gson.Gson;
-import okhttp3.*;
-import java.io.IOException;
-
-public class LLMServerClient {
-    private static final String BASE_URL = "http://localhost:5601";
-    private static final OkHttpClient client = new OkHttpClient();
-    private static final Gson gson = new Gson();
-    
-    public static void basicChat() {
-        String url = BASE_URL + "/api/v1/chat";
-        
-        // 요청 데이터
-        ChatRequest request = new ChatRequest();
-        request.setSessionId("test_session_001");
-        request.setUserMessage("안녕하세요! 자바에 대해 알려주세요.");
-        request.setRole("당신은 친근하고 유머러스한 AI 어시스턴트입니다.");
-        request.setMaxTokens(1000);
-        request.setTemperature(0.7);
-        
-        String jsonBody = gson.toJson(request);
-        
-        Request httpRequest = new Request.Builder()
-            .url(url)
-            .post(RequestBody.create(jsonBody, MediaType.get("application/json")))
-            .build();
-        
-        try (Response response = client.newCall(httpRequest).execute()) {
-            if (response.isSuccessful()) {
-                String responseBody = response.body().string();
-                ChatResponse result = gson.fromJson(responseBody, ChatResponse.class);
-                
-                System.out.println("응답: " + result.getResponseText());
-                System.out.println("토큰 사용량: " + result.getTotalTokensUsed());
-                System.out.println("응답 시간: " + result.getResponseTime() + "초");
-            } else {
-                System.out.println("API 오류: " + response.code());
-            }
-        } catch (IOException e) {
-            System.err.println("네트워크 오류: " + e.getMessage());
-        }
-    }
-    
-    // 요청 클래스
-    public static class ChatRequest {
-        private String sessionId;
-        private String userMessage;
-        private String role;
-        private int maxTokens;
-        private double temperature;
-        
-        // Getters and Setters
-        public String getSessionId() { return sessionId; }
-        public void setSessionId(String sessionId) { this.sessionId = sessionId; }
-        
-        public String getUserMessage() { return userMessage; }
-        public void setUserMessage(String userMessage) { this.userMessage = userMessage; }
-        
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
-        
-        public int getMaxTokens() { return maxTokens; }
-        public void setMaxTokens(int maxTokens) { this.maxTokens = maxTokens; }
-        
-        public double getTemperature() { return temperature; }
-        public void setTemperature(double temperature) { this.temperature = temperature; }
-    }
-    
-    // 응답 클래스
-    public static class ChatResponse {
-        private String responseText;
-        private int totalTokensUsed;
-        private double responseTime;
-        private boolean success;
-        private String errorMessage;
-        
-        // Getters and Setters
-        public String getResponseText() { return responseText; }
-        public void setResponseText(String responseText) { this.responseText = responseText; }
-        
-        public int getTotalTokensUsed() { return totalTokensUsed; }
-        public void setTotalTokensUsed(int totalTokensUsed) { this.totalTokensUsed = totalTokensUsed; }
-        
-        public double getResponseTime() { return responseTime; }
-        public void setResponseTime(double responseTime) { this.responseTime = responseTime; }
-        
-        public boolean isSuccess() { return success; }
-        public void setSuccess(boolean success) { this.success = success; }
-        
-        public String getErrorMessage() { return errorMessage; }
-        public void setErrorMessage(String errorMessage) { this.errorMessage = errorMessage; }
-    }
-    
-    public static void main(String[] args) {
-        basicChat();
-    }
-}
-```
-
----
-
-## 🔷 C#
-
-### NuGet 패키지
-
+### cURL 예제
 ```bash
-dotnet add package Newtonsoft.Json
-dotnet add package System.Net.Http
-```
-
-### 1. 기본 채팅 요청
-
-```csharp
-using System;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-
-public class LLMServerClient
-{
-    private static readonly HttpClient client = new HttpClient();
-    private static readonly string BaseUrl = "http://localhost:5601";
-    
-    public static async Task BasicChatAsync()
-    {
-        var url = $"{BaseUrl}/api/v1/chat";
-        
-        var request = new ChatRequest
-        {
-            SessionId = "test_session_001",
-            UserMessage = "안녕하세요! C#에 대해 알려주세요.",
-            Role = "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
-            MaxTokens = 1000,
-            Temperature = 0.7
-        };
-        
-        var json = JsonConvert.SerializeObject(request);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        
-        try
-        {
-            var response = await client.PostAsync(url, content);
-            var responseBody = await response.Content.ReadAsStringAsync();
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var result = JsonConvert.DeserializeObject<ChatResponse>(responseBody);
-                Console.WriteLine($"응답: {result.ResponseText}");
-                Console.WriteLine($"토큰 사용량: {result.TotalTokensUsed}");
-                Console.WriteLine($"응답 시간: {result.ResponseTime:F2}초");
-            }
-            else
-            {
-                Console.WriteLine($"API 오류: {response.StatusCode}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"네트워크 오류: {ex.Message}");
-        }
-    }
-    
-    public class ChatRequest
-    {
-        [JsonProperty("session_id")]
-        public string SessionId { get; set; }
-        
-        [JsonProperty("user_message")]
-        public string UserMessage { get; set; }
-        
-        [JsonProperty("role")]
-        public string Role { get; set; }
-        
-        [JsonProperty("max_tokens")]
-        public int MaxTokens { get; set; }
-        
-        [JsonProperty("temperature")]
-        public double Temperature { get; set; }
-    }
-    
-    public class ChatResponse
-    {
-        [JsonProperty("response_text")]
-        public string ResponseText { get; set; }
-        
-        [JsonProperty("total_tokens_used")]
-        public int TotalTokensUsed { get; set; }
-        
-        [JsonProperty("response_time")]
-        public double ResponseTime { get; set; }
-        
-        [JsonProperty("success")]
-        public bool Success { get; set; }
-        
-        [JsonProperty("error_message")]
-        public string ErrorMessage { get; set; }
-    }
-    
-    public static async Task Main(string[] args)
-    {
-        await BasicChatAsync();
-    }
-}
-```
-
----
-
-## 🐹 Go
-
-### 1. 기본 채팅 요청
-
-```go
-package main
-
-import (
-    "bytes"
-    "encoding/json"
-    "fmt"
-    "io/ioutil"
-    "net/http"
-)
-
-type ChatRequest struct {
-    SessionID string   `json:"session_id"`
-    UserMessage string `json:"user_message"`
-    Role string        `json:"role"`
-    MaxTokens int      `json:"max_tokens"`
-    Temperature float64 `json:"temperature"`
-}
-
-type ChatResponse struct {
-    ResponseText string  `json:"response_text"`
-    TotalTokensUsed int  `json:"total_tokens_used"`
-    ResponseTime float64 `json:"response_time"`
-    Success bool         `json:"success"`
-    ErrorMessage string  `json:"error_message"`
-}
-
-func basicChat() {
-    url := "http://localhost:5601/api/v1/chat"
-    
-    request := ChatRequest{
-        SessionID: "test_session_001",
-        UserMessage: "안녕하세요! Go 언어에 대해 알려주세요.",
-        Role: "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
-        MaxTokens: 1000,
-        Temperature: 0.7,
-    }
-    
-    jsonData, err := json.Marshal(request)
-    if err != nil {
-        fmt.Printf("JSON 마샬링 오류: %v\n", err)
-        return
-    }
-    
-    resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
-    if err != nil {
-        fmt.Printf("HTTP 요청 오류: %v\n", err)
-        return
-    }
-    defer resp.Body.Close()
-    
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        fmt.Printf("응답 읽기 오류: %v\n", err)
-        return
-    }
-    
-    if resp.StatusCode == http.StatusOK {
-        var result ChatResponse
-        err = json.Unmarshal(body, &result)
-        if err != nil {
-            fmt.Printf("JSON 언마샬링 오류: %v\n", err)
-            return
-        }
-        
-        fmt.Printf("응답: %s\n", result.ResponseText)
-        fmt.Printf("토큰 사용량: %d\n", result.TotalTokensUsed)
-        fmt.Printf("응답 시간: %.2f초\n", result.ResponseTime)
-    } else {
-        fmt.Printf("API 오류: %s\n", resp.Status)
-    }
-}
-
-func main() {
-    basicChat()
-}
-```
-
----
-
-## 🐘 PHP
-
-### 1. 기본 채팅 요청
-
-```php
-<?php
-
-function basicChat() {
-    $url = 'http://localhost:5601/api/v1/chat';
-    
-    $data = [
-        'session_id' => 'test_session_001',
-        'user_message' => '안녕하세요! PHP에 대해 알려주세요.',
-        'role' => '당신은 친근하고 유머러스한 AI 어시스턴트입니다.',
-        'max_tokens' => 1000,
-        'temperature' => 0.7
-    ];
-    
-    $options = [
-        'http' => [
-            'header' => "Content-type: application/json\r\n",
-            'method' => 'POST',
-            'content' => json_encode($data)
-        ]
-    ];
-    
-    $context = stream_context_create($options);
-    $result = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) {
-        echo "API 호출 오류\n";
-        return;
-    }
-    
-    $response = json_decode($result, true);
-    
-    if ($response['success']) {
-        echo "응답: " . $response['response_text'] . "\n";
-        echo "토큰 사용량: " . $response['total_tokens_used'] . "\n";
-        echo "응답 시간: " . number_format($response['response_time'], 2) . "초\n";
-    } else {
-        echo "오류: " . $response['error_message'] . "\n";
-    }
-}
-
-// cURL을 사용한 더 안정적인 방법
-function basicChatWithCurl() {
-    $url = 'http://localhost:5601/api/v1/chat';
-    
-    $data = [
-        'session_id' => 'test_session_001',
-        'user_message' => '안녕하세요! PHP에 대해 알려주세요.',
-        'role' => '당신은 친근하고 유머러스한 AI 어시스턴트입니다.',
-        'max_tokens' => 1000,
-        'temperature' => 0.7
-    ];
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode === 200) {
-        $result = json_decode($response, true);
-        echo "응답: " . $result['response_text'] . "\n";
-        echo "토큰 사용량: " . $result['total_tokens_used'] . "\n";
-        echo "응답 시간: " . number_format($result['response_time'], 2) . "초\n";
-    } else {
-        echo "API 오류: HTTP $httpCode\n";
-    }
-}
-
-// 실행
-basicChat();
-// 또는
-basicChatWithCurl();
-
-?>
-```
-
----
-
-## 📝 테스트 시나리오
-
-### 1. 기본 기능 테스트
-
-```bash
-# 1. 서버 상태 확인
-curl http://localhost:5601/
-
-# 2. 시스템 정보 확인
-curl http://localhost:5601/api/v1/system/status
-
-# 3. 기본 채팅 테스트
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"user_message": "안녕하세요!"}'
-```
-
-### 2. Free 모드 테스트
-
-```bash
-# 유효한 API Key로 테스트
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
-    "user_message": "테스트 메시지",
-    "openai_api_key": "sk-valid-key",
-    "free_mode": true
-  }'
-
-# 잘못된 API Key로 테스트 (기본 Key로 폴백)
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_message": "테스트 메시지",
-    "openai_api_key": "sk-invalid-key",
-    "free_mode": true
+    "user_message": "안녕하세요",
+    "openai_api_key": "sk-your-api-key-here",
+    "use_user_api_key": true,
+    "max_tokens": 500
   }'
 ```
 
-### 3. 에러 처리 테스트
+## 복합 시나리오 테스트
 
+### Python 예제
+```python
+def complex_scenario_chat():
+    """복합 시나리오 테스트"""
+    data = {
+        "user_message": "프로그래밍을 배우고 싶어요",
+        "role": "당신은 경험이 풍부한 프로그래밍 멘토입니다.",
+        "instructions": "초보자에게 친근하고 격려하는 톤으로 답해주세요.",
+        "memory_context": [
+            "사용자가 프로그래밍에 관심을 보임",
+            "사용자는 학습에 열정적임"
+        ],
+        "conversation_history": [
+            "user: 안녕하세요",
+            "assistant: 안녕하세요! 무엇을 도와드릴까요?"
+        ],
+        "max_tokens": 500,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ 성공: {result['response_text']}")
+        print(f"🎭 역할: {data['role']}")
+        print(f"💾 메모리: {data['memory_context']}")
+        print(f"📝 대화 히스토리: {data['conversation_history']}")
+    else:
+        print(f"❌ 실패: {response.status_code} - {response.text}")
+
+# 테스트 실행
+complex_scenario_chat()
+```
+
+### cURL 예제
+```bash
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "프로그래밍을 배우고 싶어요",
+    "role": "당신은 경험이 풍부한 프로그래밍 멘토입니다.",
+    "instructions": "초보자에게 친근하고 격려하는 톤으로 답해주세요.",
+    "memory_context": [
+      "사용자가 프로그래밍에 관심을 보임",
+      "사용자는 학습에 열정적임"
+    ],
+    "conversation_history": [
+      "user: 안녕하세요",
+      "assistant: 안녕하세요! 무엇을 도와드릴까요?"
+    ],
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+```
+
+## 에러 처리 테스트
+
+### Python 예제
+```python
+def error_handling_tests():
+    """에러 처리 테스트"""
+    
+    # 1. 빈 메시지 테스트
+    print("=== 빈 메시지 테스트 ===")
+    data = {
+        "user_message": "",
+        "max_tokens": 500,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    print(f"상태 코드: {response.status_code}")
+    if response.status_code != 200:
+        print(f"예상된 에러: {response.json()}")
+    
+    # 2. 잘못된 max_tokens 테스트
+    print("\n=== 잘못된 max_tokens 테스트 ===")
+    data = {
+        "user_message": "테스트",
+        "max_tokens": -1,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    print(f"상태 코드: {response.status_code}")
+    if response.status_code != 200:
+        print(f"예상된 에러: {response.json()}")
+    
+    # 3. 잘못된 temperature 테스트
+    print("\n=== 잘못된 temperature 테스트 ===")
+    data = {
+        "user_message": "테스트",
+        "temperature": 3.0,
+        "use_user_api_key": False
+    }
+    
+    response = requests.post(CHAT_ENDPOINT, json=data, headers=headers)
+    print(f"상태 코드: {response.status_code}")
+    if response.status_code != 200:
+        print(f"예상된 에러: {response.json()}")
+
+# 테스트 실행
+error_handling_tests()
+```
+
+### cURL 예제
 ```bash
 # 빈 메시지 테스트
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
-  -d '{"user_message": ""}'
+echo "=== 빈 메시지 테스트 ==="
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "",
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
 
-# 잘못된 토큰 수 테스트
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+# 잘못된 max_tokens 테스트
+echo -e "\n=== 잘못된 max_tokens 테스트 ==="
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
     "user_message": "테스트",
-    "max_tokens": -1
+    "max_tokens": -1,
+    "use_user_api_key": false
   }'
 
 # 잘못된 temperature 테스트
-curl -X POST "http://localhost:5601/api/v1/chat" \
-  -H "Content-Type: application/json" \
+echo -e "\n=== 잘못된 temperature 테스트 ==="
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
   -d '{
     "user_message": "테스트",
-    "temperature": 3.0
+    "temperature": 3.0,
+    "use_user_api_key": false
   }'
 ```
 
+## 성능 테스트
+
+### Python 예제
+```python
+def performance_test():
+    """성능 테스트"""
+    test_cases = [
+        {"user_message": "안녕하세요", "max_tokens": 100},
+        {"user_message": "파이썬이 뭐야?", "max_tokens": 200},
+        {"user_message": "프로그래밍을 배우고 싶어요", "max_tokens": 300},
+        {"user_message": "자바스크립트에 대해 알려주세요", "max_tokens": 400},
+        {"user_message": "데이터베이스란 무엇인가요?", "max_tokens": 500}
+    ]
+    
+    total_time = 0
+    success_count = 0
+    
+    print("=== 성능 테스트 시작 ===")
+    
+    for i, test_case in enumerate(test_cases, 1):
+        test_case["use_user_api_key"] = False
+        
+        start_time = time.time()
+        response = requests.post(CHAT_ENDPOINT, json=test_case, headers=headers)
+        end_time = time.time()
+        
+        response_time = end_time - start_time
+        total_time += response_time
+        
+        if response.status_code == 200:
+            success_count += 1
+            result = response.json()
+            print(f"✅ 테스트 {i}: {response_time:.2f}초 - {result['response_text'][:50]}...")
+        else:
+            print(f"❌ 테스트 {i}: 실패 - {response.status_code}")
+    
+    print(f"\n=== 성능 테스트 결과 ===")
+    print(f"총 테스트: {len(test_cases)}")
+    print(f"성공: {success_count}")
+    print(f"실패: {len(test_cases) - success_count}")
+    print(f"평균 응답 시간: {total_time/len(test_cases):.2f}초")
+
+# 테스트 실행
+performance_test()
+```
+
+### cURL 예제
+```bash
+echo "=== 성능 테스트 시작 ==="
+
+# 테스트 1
+echo "테스트 1: 안녕하세요"
+time curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "안녕하세요",
+    "max_tokens": 100,
+    "use_user_api_key": false
+  }'
+
+# 테스트 2
+echo -e "\n테스트 2: 파이썬이 뭐야?"
+time curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "파이썬이 뭐야?",
+    "max_tokens": 200,
+    "use_user_api_key": false
+  }'
+
+# 테스트 3
+echo -e "\n테스트 3: 프로그래밍을 배우고 싶어요"
+time curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "프로그래밍을 배우고 싶어요",
+    "max_tokens": 300,
+    "use_user_api_key": false
+  }'
+```
+
+## 시스템 모니터링 테스트
+
+### Python 예제
+```python
+def system_monitoring_tests():
+    """시스템 모니터링 테스트"""
+    
+    # 헬스체크
+    print("=== 헬스체크 ===")
+    response = requests.get(f"{BASE_URL}/api/v1/system/status")
+    if response.status_code == 200:
+        result = response.json()
+        print(f"상태: {result['status']}")
+        print(f"업타임: {result['uptime']}초")
+    
+    # 시스템 정보
+    print("\n=== 시스템 정보 ===")
+    response = requests.get(f"{BASE_URL}/api/v1/system/info")
+    if response.status_code == 200:
+        result = response.json()
+        print(f"플랫폼: {result['system']['platform']}")
+        print(f"Python 버전: {result['system']['python_version']}")
+        print(f"CPU 사용률: {result['cpu']['usage_percent']}%")
+        print(f"메모리 사용률: {result['memory']['usage_percent']}%")
+    
+    # CPU 정보
+    print("\n=== CPU 정보 ===")
+    response = requests.get(f"{BASE_URL}/api/v1/system/cpu")
+    if response.status_code == 200:
+        result = response.json()
+        print(f"CPU 사용률: {result['cpu']['usage_percent']}%")
+        print(f"CPU 코어 수: {result['cpu']['count']}")
+    
+    # 메모리 정보
+    print("\n=== 메모리 정보 ===")
+    response = requests.get(f"{BASE_URL}/api/v1/system/memory")
+    if response.status_code == 200:
+        result = response.json()
+        print(f"총 메모리: {result['memory']['total'] / (1024**3):.2f} GB")
+        print(f"사용 중: {result['memory']['used'] / (1024**3):.2f} GB")
+        print(f"사용률: {result['memory']['usage_percent']}%")
+
+# 테스트 실행
+system_monitoring_tests()
+```
+
+### cURL 예제
+```bash
+echo "=== 헬스체크 ==="
+curl "$BASE_URL/api/v1/system/status"
+
+echo -e "\n=== 시스템 정보 ==="
+curl "$BASE_URL/api/v1/system/info"
+
+echo -e "\n=== CPU 정보 ==="
+curl "$BASE_URL/api/v1/system/cpu"
+
+echo -e "\n=== 메모리 정보 ==="
+curl "$BASE_URL/api/v1/system/memory"
+
+echo -e "\n=== 디스크 정보 ==="
+curl "$BASE_URL/api/v1/system/disk"
+```
+
+## 전체 테스트 스크립트
+
+### Python 전체 테스트
+```python
+def run_all_tests():
+    """전체 테스트 실행"""
+    print("🚀 LLM Server API 테스트 시작")
+    print("=" * 50)
+    
+    # 기본 테스트
+    print("\n1. 기본 채팅 테스트")
+    basic_chat()
+    
+    # 역할 기반 테스트
+    print("\n2. 역할 기반 채팅 테스트")
+    role_based_chat()
+    
+    # 메모리 컨텍스트 테스트
+    print("\n3. 메모리 컨텍스트 테스트")
+    memory_context_chat()
+    
+    # 대화 히스토리 테스트
+    print("\n4. 대화 히스토리 테스트")
+    conversation_history_chat()
+    
+    # 사용자 API Key 테스트
+    print("\n5. 사용자 API Key 테스트")
+    user_api_key_chat()
+    
+    # 복합 시나리오 테스트
+    print("\n6. 복합 시나리오 테스트")
+    complex_scenario_chat()
+    
+    # 에러 처리 테스트
+    print("\n7. 에러 처리 테스트")
+    error_handling_tests()
+    
+    # 성능 테스트
+    print("\n8. 성능 테스트")
+    performance_test()
+    
+    # 시스템 모니터링 테스트
+    print("\n9. 시스템 모니터링 테스트")
+    system_monitoring_tests()
+    
+    print("\n✅ 모든 테스트 완료!")
+
+# 전체 테스트 실행
+if __name__ == "__main__":
+    run_all_tests()
+```
+
+### Bash 전체 테스트
+```bash
+#!/bin/bash
+
+echo "🚀 LLM Server API 테스트 시작"
+echo "=================================================="
+
+# 기본 테스트
+echo -e "\n1. 기본 채팅 테스트"
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "안녕하세요!",
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+
+# 역할 기반 테스트
+echo -e "\n2. 역할 기반 채팅 테스트"
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "파이썬을 가르쳐주세요",
+    "role": "당신은 친근하고 이해하기 쉬운 프로그래밍 선생님입니다.",
+    "instructions": "초보자에게 적합한 설명을 해주세요.",
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+
+# 메모리 컨텍스트 테스트
+echo -e "\n3. 메모리 컨텍스트 테스트"
+curl -X POST "$CHAT_ENDPOINT" \
+  $HEADERS \
+  -d '{
+    "user_message": "내가 좋아하는 색깔이 뭐였지?",
+    "memory_context": [
+      "사용자가 파란색을 좋아한다고 언급함",
+      "사용자는 간단한 설명을 선호함"
+    ],
+    "max_tokens": 500,
+    "use_user_api_key": false
+  }'
+
+# 시스템 모니터링 테스트
+echo -e "\n4. 시스템 모니터링 테스트"
+curl "$BASE_URL/api/v1/system/status"
+
+echo -e "\n✅ 모든 테스트 완료!"
+```
+
+## 문제 해결
+
+### 일반적인 문제
+
+#### 1. 연결 오류
+```
+ConnectionError: HTTPConnectionPool
+```
+**해결방법:**
+- 서버가 실행 중인지 확인
+- 포트 번호 확인 (기본: 8000)
+- 방화벽 설정 확인
+
+#### 2. 인증 오류
+```
+401 Unauthorized
+```
+**해결방법:**
+- API Key 설정 확인
+- `use_user_api_key` 값 확인
+
+#### 3. 타임아웃 오류
+```
+TimeoutError: Request timed out
+```
+**해결방법:**
+- `max_tokens` 값 줄이기
+- 네트워크 연결 확인
+- 서버 성능 확인
+
+#### 4. 메모리 부족
+```
+MemoryError
+```
+**해결방법:**
+- 요청 데이터 크기 줄이기
+- `conversation_history` 길이 제한
+- 서버 리소스 확인
+
 ---
-
-## 🔗 관련 문서
-
-- **[API 문서](./README.md)**: 전체 API 명세
-- **[시스템 모니터링](./system-monitoring.md)**: 시스템 모니터링 API 상세 가이드
-- **[에러 처리](./error-handling.md)**: 에러 처리 및 디버깅 가이드
-
----
-
-**문서 버전**: 1.0  
-**최종 업데이트**: 2024년 12월  
-**작성자**: LLM Server 개발팀 
