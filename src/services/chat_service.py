@@ -3,6 +3,11 @@ from src.core.system_prompt import SystemPrompt
 from src.dto.request_dto import ChatRequest
 from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
+from src.exceptions.chat_exceptions import (
+    ChatServiceException,
+    OpenAIClientException,
+    ValidationException
+)
 
 logger = get_logger(__name__)
 
@@ -38,6 +43,29 @@ class ChatService:
         
         return formatted_history
     
+    def _validate_request(self, request: ChatRequest) -> None:
+        """요청 데이터 검증"""
+        if not request.user_message or request.user_message.strip() == "":
+            raise ValidationException(
+                message="user_message는 필수 필드입니다.",
+                field="user_message",
+                value=request.user_message
+            )
+        
+        if request.max_tokens and request.max_tokens <= 0:
+            raise ValidationException(
+                message="max_tokens는 0보다 커야 합니다.",
+                field="max_tokens",
+                value=str(request.max_tokens)
+            )
+        
+        if request.temperature and (request.temperature < 0 or request.temperature > 2):
+            raise ValidationException(
+                message="temperature는 0과 2 사이의 값이어야 합니다.",
+                field="temperature",
+                value=str(request.temperature)
+            )
+    
     def process_chat_request(self, request: ChatRequest) -> ChatResponse:
         """
         채팅 요청을 처리하여 응답을 반환
@@ -47,9 +75,16 @@ class ChatService:
             
         Returns:
             ChatResponse: 채팅 응답 데이터
+            
+        Raises:
+            ChatServiceException: 채팅 서비스 처리 중 오류 발생 시
+            ValidationException: 요청 데이터 검증 실패 시
         """
         try:
             logger.info(f"채팅 요청 처리 시작: {request.user_message[:50]}...")
+            
+            # 요청 데이터 검증
+            self._validate_request(request)
             
             # 메시지 구성
             system_message = self._create_system_message(
@@ -82,9 +117,14 @@ class ChatService:
             logger.info(f"채팅 응답 처리 완료: {response.response_time:.2f}s")
             return response
             
+        except (ValidationException, OpenAIClientException):
+            # 검증 에러와 OpenAI 에러는 그대로 재발생
+            raise
         except Exception as e:
-            logger.error(f"채팅 요청 처리 중 오류: {e}")
-            return ChatResponse.create_error_response(
-                session_id=request.session_id or "",
-                error_message=f"채팅 처리 중 오류: {str(e)}"
+            error_msg = f"채팅 요청 처리 중 예상치 못한 오류: {str(e)}"
+            logger.error(error_msg)
+            raise ChatServiceException(
+                message=error_msg,
+                error_code="CHAT_PROCESSING_ERROR",
+                details={"session_id": request.session_id}
             ) 

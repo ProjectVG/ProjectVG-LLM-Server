@@ -1,6 +1,13 @@
 import logging
 from src.services.chat_service import ChatService
 from src.dto.request_dto import ChatRequest
+from src.utils.error_handler import ErrorHandler
+from src.exceptions.chat_exceptions import (
+    ChatServiceException,
+    OpenAIClientException,
+    ValidationException,
+    ConfigurationException
+)
 
 
 DEFAULT_MEMORY = [
@@ -31,6 +38,7 @@ def app():
 
     try:
         chat_service = ChatService()
+        error_handler = ErrorHandler()
         print("채팅 서비스가 초기화 완료")
         print("대화를 시작합니다.")
         
@@ -57,8 +65,21 @@ def app():
                 history.append(f"user:{user_input}")
                 history.append(f"assistant:{response.response_text}")
                 
+            except ValidationException as e:
+                print(f"입력 오류: {e.message}")
+                
+            except OpenAIClientException as e:
+                print(f"AI 서비스 오류: {e.message}")
+                
+            except ChatServiceException as e:
+                print(f"채팅 서비스 오류: {e.message}")
+                
+            except ConfigurationException as e:
+                print(f"설정 오류: {e.message}")
+                break
+                
             except Exception as e:
-                logging.error(f"채팅 중 오류 발생: {e}")
+                print(f"예상치 못한 오류: {str(e)}")
                 
     except Exception as e:
         logging.error(f"애플리케이션 초기화 실패: {e}")

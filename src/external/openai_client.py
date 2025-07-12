@@ -3,6 +3,7 @@ from openai.types.responses import Response
 import time
 from src.utils.logger import get_logger
 from src.config import config
+from src.exceptions.chat_exceptions import OpenAIClientException, ConfigurationException
 
 logger = get_logger(__name__)
 
@@ -24,8 +25,9 @@ class OpenAIClient:
             logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
             return api_key
         else:
-            logger.error("OPENAI_API_KEY를 불러오지 못했습니다.")
-            raise ValueError("OPENAI_API_KEY를 불러오지 못했습니다.")
+            error_msg = "OPENAI_API_KEY를 불러오지 못했습니다."
+            logger.error(error_msg)
+            raise ConfigurationException(error_msg, config_key="OPENAI_API_KEY")
     
     def create_completion(
         self,
@@ -47,20 +49,33 @@ class OpenAIClient:
             
         Returns:
             tuple[Response, float]: OpenAI 응답과 응답 시간
+            
+        Raises:
+            OpenAIClientException: OpenAI API 호출 중 오류 발생 시
         """
         start_time = time.time()
         
-        logger.debug(f"OpenAI API 요청 시작 (model: {model}, temperature: {temperature})")
-        
-        response = self.client.responses.create(
-            model=model,
-            input=messages,
-            instructions=instructions,
-            temperature=temperature,
-            max_output_tokens=max_tokens
-        )
+        try:
+            logger.debug(f"OpenAI API 요청 시작 (model: {model}, temperature: {temperature})")
+            
+            response = self.client.responses.create(
+                model=model,
+                input=messages,
+                instructions=instructions,
+                temperature=temperature,
+                max_output_tokens=max_tokens
+            )
 
-        response_time = time.time() - start_time
-        logger.debug(f"OpenAI API 응답 완료 (ID: {response.id}, 시간: {response_time:.2f}s)")
-        
-        return response, response_time 
+            response_time = time.time() - start_time
+            logger.debug(f"OpenAI API 응답 완료 (ID: {response.id}, 시간: {response_time:.2f}s)")
+            
+            return response, response_time
+            
+        except Exception as e:
+            error_msg = f"OpenAI API 호출 중 오류 발생: {str(e)}"
+            logger.error(error_msg)
+            raise OpenAIClientException(
+                message=error_msg,
+                error_code="OPENAI_API_ERROR",
+                details={"model": model, "temperature": temperature}
+            ) 
