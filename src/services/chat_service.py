@@ -97,7 +97,7 @@ class ChatService:
             openai_response, response_time, api_key_source = self.openai_client.generate_response(
                 messages=messages,
                 api_key=request.openai_api_key,
-                free_mode=request.free_mode,
+                use_user_api_key=request.use_user_api_key,
                 model=request.model,
                 instructions=request.instructions,
                 max_tokens=request.max_tokens,

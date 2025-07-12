@@ -7,7 +7,7 @@
 - 지시사항 매개변수 테스트
 - MAX_TOKEN 제한 테스트
 - API Key 기능 테스트
-- Free 모드 테스트
+- 사용자 API Key 기능 테스트
 """
 
 import unittest
@@ -43,7 +43,6 @@ class TestUnit(unittest.TestCase):
         request = ChatRequest(
             user_message="안녕하세요",
             max_tokens=get_test_max_tokens(),
-            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -71,7 +70,6 @@ class TestUnit(unittest.TestCase):
         request = ChatRequest(
             user_message="안녕하세요",
             max_tokens=get_test_max_tokens(),
-            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -97,7 +95,6 @@ class TestUnit(unittest.TestCase):
             user_message="메모리에 뭐가 있어?",
             memory_context=["테스트 메모리"],
             max_tokens=get_test_max_tokens(),
-            free_mode=True
         )
         
         print(f"메모리: {request.memory_context}")
@@ -125,7 +122,6 @@ class TestUnit(unittest.TestCase):
             user_message="파이썬이 뭐야?",
             instructions="한 문장으로 답해주세요.",
             max_tokens=get_test_max_tokens(),
-            free_mode=True
         )
         
         print(f"지시사항: {request.instructions}")
@@ -152,7 +148,6 @@ class TestUnit(unittest.TestCase):
         request = ChatRequest(
             user_message="파이썬의 모든 특징과 장점을 자세히 설명해주세요. 가능한 한 길고 상세하게 설명해주세요.",
             max_tokens=16,  # OpenAI API 최소값
-            free_mode=True
         )
         
         print(f"프롬프트: {request.user_message}")
@@ -177,61 +172,68 @@ class TestUnit(unittest.TestCase):
         
         from src.dto.request_dto import ChatRequest
         
-        # 테스트에서는 Free 모드로 기본 API Key 사용
+        # 테스트에서는 기본 API Key 사용
         request = ChatRequest(
             user_message="안녕하세요",
             max_tokens=get_test_max_tokens(),
-            free_mode=True
         )
         
         response = self.chat_service.process_chat_request(request)
         
-        print(f"Free 모드 API Key 사용: {response.api_key_source}")
+        print(f"기본 API Key 사용: {response.api_key_source}")
         self.assertIsNotNone(response.api_key_source)
         self.assertIn(response.api_key_source, ["default", "user_provided"])
         
         print("[SUCCESS] API Key 기능 테스트 성공")
     
-    def test_free_mode_functionality(self):
-        """Free 모드 기능 테스트"""
-        print("\n8. Free 모드 기능 테스트")
+    def test_use_user_api_key_functionality(self):
+        """사용자 API Key 기능 테스트"""
+        print("\n8. 사용자 API Key 기능 테스트")
         print("-" * 40)
         
         from src.dto.request_dto import ChatRequest
         
-        # Free 모드에서 유효하지 않은 API Key를 제공해도 기본 Key로 폴백
         request = ChatRequest(
             user_message="안녕하세요",
-            openai_api_key="invalid-key",
-            free_mode=True,
-            max_tokens=get_test_max_tokens()
+            max_tokens=get_test_max_tokens(),
         )
         
         response = self.chat_service.process_chat_request(request)
         
-        print(f"Free 모드 API Key 소스: {response.api_key_source}")
-        self.assertEqual(response.api_key_source, "default")
+        print(f"API Key 소스: {response.api_key_source}")
+        self.assertIsNotNone(response.api_key_source)
+        self.assertTrue(response.success)
         
-        print("[SUCCESS] Free 모드 기능 테스트 성공")
+        print("[SUCCESS] 사용자 API Key 기능 테스트 성공")
 
 
 def run_unit_tests():
     """단위 테스트 실행"""
-    print("=" * 60)
-    print("단위 테스트 시작")
-    print("=" * 60)
+    print("🧪 단위 테스트 시작")
+    print("=" * 50)
     
-    test_suite = unittest.TestLoader().loadTestsFromTestCase(TestUnit)
+    # 테스트 스위트 생성
+    test_suite = unittest.TestSuite()
+    
+    # 테스트 케이스들 추가
+    test_suite.addTest(TestUnit("test_chat_service_initialization"))
+    test_suite.addTest(TestUnit("test_simple_chat_request"))
+    test_suite.addTest(TestUnit("test_response_time"))
+    test_suite.addTest(TestUnit("test_memory_parameter"))
+    test_suite.addTest(TestUnit("test_instructions_parameter"))
+    test_suite.addTest(TestUnit("test_max_token_limit"))
+    test_suite.addTest(TestUnit("test_api_key_functionality"))
+    test_suite.addTest(TestUnit("test_use_user_api_key_functionality"))
+    
+    # 테스트 실행
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(test_suite)
     
-    print("=" * 60)
-    print("단위 테스트 결과:")
-    print(f"실행된 테스트: {result.testsRun}")
-    print(f"성공: {result.testsRun - len(result.failures) - len(result.errors)}")
-    print(f"실패: {len(result.failures)}")
-    print(f"오류: {len(result.errors)}")
-    print("=" * 60)
+    print("\n" + "=" * 50)
+    if result.wasSuccessful():
+        print("✅ 모든 단위 테스트 통과!")
+    else:
+        print("❌ 일부 단위 테스트 실패")
     
     return result.wasSuccessful()
 

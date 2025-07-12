@@ -29,7 +29,7 @@ class OpenAIClient:
             logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
             return api_key
         else:
-            logger.warning("OPENAI_API_KEY가 설정되지 않았습니다. Free 모드에서만 사용 가능합니다.")
+            logger.warning("OPENAI_API_KEY가 설정되지 않았습니다. 사용자 API Key만 사용 가능합니다.")
             return None
     
     def _validate_api_key(self, api_key: str) -> bool:
@@ -43,33 +43,36 @@ class OpenAIClient:
             logger.warning(f"API Key 유효성 검증 실패: {str(e)}")
             return False
     
-    def _select_api_key(self, api_key: str = None, free_mode: bool = False) -> tuple[str, str]:
+    def _select_api_key(self, api_key: str = None, use_user_api_key: bool = False) -> tuple[str, str]:
         """
         API Key 선택 및 검증
         """
         default_key = self._load_api_key()
         
-        if free_mode:
+        if use_user_api_key:
             if api_key and self._validate_api_key(api_key):
-                logger.info("Free 모드: 사용자 제공 API Key 사용")
+                logger.info("사용자 API Key 사용")
                 return api_key, "user_provided"
             elif default_key:
-                logger.info("Free 모드: 기본 API Key 사용")
+                logger.info("사용자 API Key가 유효하지 않아 기본 API Key 사용")
                 return default_key, "default"
             else:
-                raise ConfigurationException("Free 모드에서도 유효한 API Key를 찾을 수 없습니다.", config_key="OPENAI_API_KEY")
+                raise ConfigurationException("유효한 API Key를 찾을 수 없습니다.", config_key="OPENAI_API_KEY")
         
-        if api_key and self._validate_api_key(api_key):
-            logger.info("일반 모드: 사용자 제공 API Key 사용")
+        if default_key:
+            logger.info("기본 API Key 사용")
+            return default_key, "default"
+        elif api_key and self._validate_api_key(api_key):
+            logger.info("기본 API Key가 없어 사용자 API Key 사용")
             return api_key, "user_provided"
         else:
-            raise ConfigurationException("유효한 OpenAI API Key가 제공되지 않았습니다.", config_key="OPENAI_API_KEY")
+            raise ConfigurationException("유효한 OpenAI API Key가 설정되지 않았습니다.", config_key="OPENAI_API_KEY")
     
     def generate_response(
         self,
         messages: list[dict],
         api_key: str = None,
-        free_mode: bool = False,
+        use_user_api_key: bool = False,
         model: str = DEFAULT_MODEL,
         instructions: str = "",
         max_tokens: int = DEFAULT_MAX_TOKENS,
@@ -81,7 +84,7 @@ class OpenAIClient:
         Args:
             messages: OpenAI 형식의 메시지 리스트
             api_key: 사용할 API Key (선택사항)
-            free_mode: Free 모드 여부 (기본값: False)
+            use_user_api_key: 사용자 API Key 사용 여부 (기본값: False)
             model: 사용할 모델
             instructions: 추가 지시사항
             max_tokens: 최대 토큰 수
@@ -97,7 +100,7 @@ class OpenAIClient:
         start_time = time.time()
         
         # API Key 선택 및 검증
-        selected_api_key, api_key_source = self._select_api_key(api_key, free_mode)
+        selected_api_key, api_key_source = self._select_api_key(api_key, use_user_api_key)
         
         try:
             # 선택된 API Key로 클라이언트 생성
