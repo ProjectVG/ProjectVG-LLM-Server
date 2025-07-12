@@ -17,7 +17,10 @@ class OpenAIClient:
     
     def __init__(self, api_key: str = None):
         self.api_key = api_key or self._load_api_key()
-        self.client = OpenAI(api_key=self.api_key)
+        if self.api_key:
+            self.client = OpenAI(api_key=self.api_key)
+        else:
+            self.client = None
         
     def _load_api_key(self) -> str:
         """기본 API Key 로드"""
@@ -26,9 +29,8 @@ class OpenAIClient:
             logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
             return api_key
         else:
-            error_msg = "OPENAI_API_KEY를 불러오지 못했습니다."
-            logger.error(error_msg)
-            raise ConfigurationException(error_msg, config_key="OPENAI_API_KEY")
+            logger.warning("OPENAI_API_KEY가 설정되지 않았습니다. Free 모드에서만 사용 가능합니다.")
+            return None
     
     def _validate_api_key(self, api_key: str) -> bool:
         """API Key 유효성 검증"""
@@ -45,24 +47,23 @@ class OpenAIClient:
         """
         API Key 선택 및 검증
         """
+        default_key = self._load_api_key()
+        
         if free_mode:
-            # Free 모드: 외부 API Key 우선 사용, 실패 시 기본 Key 사용
             if api_key and self._validate_api_key(api_key):
                 logger.info("Free 모드: 사용자 제공 API Key 사용")
                 return api_key, "user_provided"
-            else:
-                default_key = self._load_api_key()
+            elif default_key:
                 logger.info("Free 모드: 기본 API Key 사용")
                 return default_key, "default"
-        else:
-            # 일반 모드: 외부 API Key만 사용
-            if api_key and self._validate_api_key(api_key):
-                logger.info("일반 모드: 사용자 제공 API Key 사용")
-                return api_key, "user_provided"
             else:
-                error_msg = "유효한 OpenAI API Key가 제공되지 않았습니다."
-                logger.error(error_msg)
-                raise ConfigurationException(error_msg, config_key="OPENAI_API_KEY")
+                raise ConfigurationException("Free 모드에서도 유효한 API Key를 찾을 수 없습니다.", config_key="OPENAI_API_KEY")
+        
+        if api_key and self._validate_api_key(api_key):
+            logger.info("일반 모드: 사용자 제공 API Key 사용")
+            return api_key, "user_provided"
+        else:
+            raise ConfigurationException("유효한 OpenAI API Key가 제공되지 않았습니다.", config_key="OPENAI_API_KEY")
     
     def generate_response(
         self,
