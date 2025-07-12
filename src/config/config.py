@@ -12,7 +12,6 @@ class Config:
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TEMPERATURE = "0.7"
     DEFAULT_MAX_TOKENS = "1000"
-    DEFAULT_SYSTEM_MESSAGE = "당신은 도움이 되는 AI 어시스턴트입니다."
     
     def __init__(self):
         self._load_env_file()
@@ -47,8 +46,6 @@ class Config:
             self.DEFAULT_TEMPERATURE = os.environ.get("DEFAULT_TEMPERATURE")
         if os.environ.get("DEFAULT_MAX_TOKENS"):
             self.DEFAULT_MAX_TOKENS = os.environ.get("DEFAULT_MAX_TOKENS")
-        if os.environ.get("DEFAULT_SYSTEM_MESSAGE"):
-            self.DEFAULT_SYSTEM_MESSAGE = os.environ.get("DEFAULT_SYSTEM_MESSAGE")
     
     def get(self, key: str, default: Optional[str] = None) -> str:
         """설정 값에서 값을 가져옴"""

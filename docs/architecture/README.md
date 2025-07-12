@@ -244,7 +244,6 @@ class Config:
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TEMPERATURE = "0.7"
     DEFAULT_MAX_TOKENS = "1000"
-    DEFAULT_SYSTEM_MESSAGE = "당신은 도움이 되는 AI 어시스턴트입니다."
     
     def __init__(self):
         self._load_env_file()
