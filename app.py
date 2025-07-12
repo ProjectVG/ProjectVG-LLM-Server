@@ -44,8 +44,8 @@ logger = get_logger(__name__)
 
 if __name__ == "__main__":
     # 설정에서 포트 가져오기
-    port = config.get_int("SERVER_PORT", 5601)
-    host = config.get("SERVER_HOST", "0.0.0.0")
+    port = config.get_int("SERVER_PORT")
+    host = "0.0.0.0"
     
     logger.info(f"서버 시작 중... (Host: {host}, Port: {port})")
     

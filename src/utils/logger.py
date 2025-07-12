@@ -62,7 +62,7 @@ def setup_logging(
     """로깅 설정"""
     # 설정에서 로그 레벨 가져오기
     if level is None:
-        log_level_str = config.get("LOG_LEVEL", "INFO").upper()
+        log_level_str = config.get("LOG_LEVEL").upper()
         level_map = {
             "DEBUG": logging.DEBUG,
             "INFO": logging.INFO,

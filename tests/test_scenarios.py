@@ -1,16 +1,17 @@
 """
 시나리오 테스트
-- 대화 지속 테스트
-- 메모리 테스트  
+- 대화 지속성 테스트
+- 메모리 기능 테스트
 - 시스템 메시지 테스트
 - Instructions 테스트
 - 다중 대화 시나리오 테스트
 - 지시사항 준수 시나리오 테스트
 - 성능 시나리오 테스트
+- 역할 설정 테스트
+- 역할과 메모리 조합 테스트
 """
 
 import unittest
-import time
 from src.services.chat_service import ChatService
 from src.config import config
 from tests.test_input import get_test_max_tokens, get_performance_test_max_tokens
