@@ -3,214 +3,188 @@
 **LLM Server**는 FastAPI와 OpenAI API를 활용하여 대화형 AI 챗봇 기능을 제공하는 서버 프로젝트입니다.  
 한국어 환경에 최적화되어 있으며, 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트 등 다양한 입력을 조합해 유연한 챗봇 응답을 생성할 수 있습니다.
 
----
+## 🚀 빠른 시작
 
-## 주요 특징
-
-- **FastAPI 기반** RESTful API 서버
-- **OpenAI API 연동** (GPT-4.1, GPT-4o 등 지원)
-- **시스템 프롬프트, 대화 히스토리, 메모리** 등 다양한 컨텍스트 관리
-- **한글 주석 및 에러 메시지**로 한국어 사용자 친화적
-- **모듈화된 구조**: API, Core, DTO, Config, Utils 등
-- **시스템 모니터링 API** 내장
-- **테스트 코드 및 샘플 코드 제공**
-- **API Key 관리**: 사용자 제공 API Key 지원 및 Free 모드 기능
-- **설정 관리**: 환경 변수 기반 설정으로 유연한 배포
-
----
-
-## 폴더 구조
-
-```
-LLM Server/
-  ├── app.py                  # FastAPI 진입점
-  ├── docker-compose.yml      # Docker Compose 설정
-  ├── Dockerfile              # Docker 빌드 파일
-  ├── requirement.txt         # Python 패키지 목록
-  ├── src/
-  │   ├── api/                # API 라우터 및 문서
-  │   ├── config/             # 환경설정 관리
-  │   ├── core/               # 시스템 프롬프트 등 핵심 로직
-  │   ├── dto/                # 요청/응답 데이터 모델
-  │   ├── external/           # 외부 API 연동 (OpenAI 등)
-  │   ├── services/           # 비즈니스 로직 처리 서비스
-  │   └── utils/              # 로깅, 시스템 정보 등 유틸리티
-  └── tests/                  # 테스트 코드
-```
-
----
-
-## 빠른 시작
-
-### 1. 환경 변수 설정
-
-`.env` 파일 또는 환경 변수에 **OpenAI API Key** 등 필수 정보를 입력하세요.
-
-예시:
-```
-OPENAI_API_KEY=sk-xxxxxxx
-SERVER_PORT=5601
-SERVER_HOST=0.0.0.0
-```
-
-### 2. 패키지 설치
+### 1. 환경 설정
 
 ```bash
+# 저장소 클론
+git clone https://github.com/your-repo/llm-server.git
+cd llm-server
+
+# 가상환경 생성 및 활성화
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 또는
+venv\Scripts\activate     # Windows
+
+# 패키지 설치
 pip install -r requirement.txt
+```
+
+### 2. 환경 변수 설정
+
+`.env` 파일을 생성하고 다음 내용을 입력하세요:
+
+```env
+OPENAI_API_KEY=sk-your-openai-api-key-here
+SERVER_HOST=0.0.0.0
+SERVER_PORT=5601
+LOG_LEVEL=INFO
 ```
 
 ### 3. 서버 실행
 
 ```bash
+# 로컬 실행
 python app.py
-```
 
-### 4. Docker로 실행
-
-```bash
+# 또는 Docker 실행
 docker-compose up --build
 ```
 
----
+### 4. 서버 확인
 
-## 주요 API
+- **서버 상태**: http://localhost:5601/
+- **API 문서**: http://localhost:5601/docs
+- **시스템 정보**: http://localhost:5601/api/v1/system/status
 
-### 1. 채팅 API
+## 📋 주요 기능
 
-- **POST /api/v1/chat**  
-  OpenAI LLM과 대화(챗봇) 기능 제공
+### 🤖 AI 챗봇 기능
+- **OpenAI API 연동**: GPT-4o-mini, GPT-4 등 다양한 모델 지원
+- **컨텍스트 관리**: 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트 조합
+- **역할 기반 응답**: AI의 역할을 설정하여 일관된 응답 생성
+- **토큰 최적화**: 효율적인 토큰 사용으로 비용 절약
 
-#### 요청 예시
+### 🔑 API Key 관리
+- **사용자 제공 API Key**: 개별 사용자가 자신의 API Key 사용 가능
+- **Free 모드**: API Key 실패 시 기본 Key로 폴백
+- **Key 검증**: API Key 유효성 실시간 검증
+- **보안**: 응답에 실제 API Key 노출하지 않음
 
-```json
-{
-  "session_id": "session_123",
-  "system_message": "친근하게 대화해주세요",
-  "user_message": "파이썬에 대해 알려줘",
-  "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다. 항상 긍정적이고 도움이 되는 답변을 제공합니다.",
-  "conversation_history": [
-    "user:안녕하세요",
-    "assistant:안녕하세요! 무엇을 도와드릴까요?"
-  ],
-  "memory_context": ["사용자는 개발자입니다"],
-  "openai_api_key": "sk-your-api-key",
-  "free_mode": true,
-  "max_tokens": 1000,
-  "temperature": 0.7,
-  "model": "gpt-4o-mini"
-}
-```
+### 📊 시스템 모니터링
+- **실시간 모니터링**: CPU, 메모리, 디스크, 네트워크 사용량
+- **헬스체크**: 시스템 상태 확인 엔드포인트
+- **프로세스 정보**: 서버 프로세스 상세 정보
+- **Docker 지원**: 컨테이너 환경 정보 제공
 
-#### 응답 예시
+## 🔗 API 사용 예시
 
-```json
-{
-  "session_id": "session_123",
-  "response_text": "파이썬은 범용 프로그래밍 언어입니다...",
-  "model": "gpt-4o-mini",
-  "input_tokens": 20,
-  "output_tokens": 50,
-  "total_tokens_used": 70,
-  "output_format": "text",
-  "created_at": "2024-01-01T00:00:00",
-  "temperature": 0.7,
-  "instructions": "",
-  "response_time": 1.23,
-  "api_key_source": "user_provided",
-  "success": true,
-  "error_message": null
-}
-```
-
-#### API Key 관리 기능
-
-- **`openai_api_key`** (선택사항): 사용자가 제공하는 OpenAI API Key
-- **`free_mode`** (선택사항): Free 모드 활성화 여부
-  - `true`: 사용자 제공 API Key가 유효하지 않으면 기본 Key로 폴백
-  - `false`: 사용자 제공 API Key만 사용 (유효하지 않으면 오류)
-- **`api_key_source`** (응답): 사용된 API Key 소스
-  - `"default"`: 기본 설정된 API Key 사용
-  - `"user_provided"`: 사용자가 제공한 API Key 사용
-
-- **GET /**  
-  서버 상태 확인용 엔드포인트
-
----
-
-### 2. 시스템 모니터링 API
-
-- **GET /api/v1/system/info** : 전체 시스템 정보
-- **GET /api/v1/system/status** : 간단한 헬스체크
-- **GET /api/v1/system/cpu** : CPU 정보
-- **GET /api/v1/system/memory** : 메모리 정보
-- **GET /api/v1/system/disk** : 디스크 정보
-
-자세한 예시는 `src/api/SYSTEM_API_README.md` 참고
-
----
-
-## 개발/구현 참고사항
-
-- **컨텍스트 관리**: 시스템 프롬프트, 대화 히스토리, 메모리 컨텍스트를 조합하여 LLM에 전달
-- **서비스 레이어**: 비즈니스 로직을 서비스 클래스에서 처리하여 관심사 분리
-- **에러 처리**: 체계적인 예외 처리와 에러 핸들러로 안정성 확보
-- **로깅**: 모든 주요 이벤트 및 에러는 한글로 기록
-- **환경설정**: `src/config/config.py`에서 환경 변수 관리
-- **테스트**: `tests/` 폴더에 단위/시나리오 테스트 코드 포함
-- **토큰 최적화**: 테스트 시 토큰 사용량을 제한하여 비용 효율성 확보
-- **API Key 관리**: 사용자 제공 API Key 검증 및 Free 모드 지원
-
----
-
-## 예제 코드
-
-### Python
+### 기본 채팅 요청
 
 ```python
 import requests
 
-# 기본 사용
-payload = {
-    "session_id": "session_123",
-    "user_message": "파이썬에 대해 알려줘"
-}
-response = requests.post("http://localhost:5601/api/v1/chat", json=payload)
-print(response.json())
+response = requests.post("http://localhost:5601/api/v1/chat", json={
+    "session_id": "test_session",
+    "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
+    "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
+    "max_tokens": 1000,
+    "temperature": 0.7
+})
 
-# Free 모드 사용
-payload = {
-    "session_id": "session_123",
-    "user_message": "파이썬에 대해 알려줘",
+result = response.json()
+print(result['response_text'])
+```
+
+### Free 모드 사용
+
+```python
+response = requests.post("http://localhost:5601/api/v1/chat", json={
+    "session_id": "test_session",
+    "user_message": "파이썬에 대해 알려주세요",
     "openai_api_key": "sk-your-api-key",
     "free_mode": True
-}
-response = requests.post("http://localhost:5601/api/v1/chat", json=payload)
-print(response.json())
+})
+
+result = response.json()
+print(f"응답: {result['response_text']}")
+print(f"API Key 소스: {result['api_key_source']}")
 ```
 
-### Node.js
+## 📁 프로젝트 구조
 
-```javascript
-const axios = require('axios');
-
-// 기본 사용
-axios.post('http://localhost:5601/api/v1/chat', {
-  session_id: 'session_123',
-  user_message: '파이썬에 대해 알려줘'
-}).then(res => {
-  console.log(res.data);
-});
-
-// Free 모드 사용
-axios.post('http://localhost:5601/api/v1/chat', {
-  session_id: 'session_123',
-  user_message: '파이썬에 대해 알려줘',
-  openai_api_key: 'sk-your-api-key',
-  free_mode: true
-}).then(res => {
-  console.log(res.data);
-});
+```
+LLM Server/
+├── app.py                  # FastAPI 진입점
+├── docker-compose.yml      # Docker Compose 설정
+├── Dockerfile              # Docker 빌드 파일
+├── requirement.txt         # Python 패키지 목록
+├── docs/                   # 📚 개발자 문서
+│   ├── overview/          # 개요 및 시작 가이드
+│   ├── api/              # API 문서
+│   ├── architecture/     # 아키텍처 및 개발 가이드
+│   ├── deployment/       # 배포 및 운영 가이드
+│   ├── testing/          # 테스트 및 품질 관리
+│   └── ...               # 기타 문서
+├── src/
+│   ├── api/              # 🌐 API 라우터 및 문서
+│   ├── config/           # ⚙️ 환경설정 관리
+│   ├── dto/              # 📦 요청/응답 데이터 모델
+│   ├── external/         # 🔗 외부 API 연동 (OpenAI 등)
+│   ├── services/         # 🏢 비즈니스 로직 처리 서비스
+│   ├── utils/            # 🛠️ 로깅, 시스템 정보 등 유틸리티
+│   └── exceptions/       # ⚠️ 커스텀 예외 처리
+└── tests/                # 🧪 테스트 코드
 ```
 
+## 📚 문서
 
-더 자세한 API 명세 및 예시는 `src/api/README.md`와 `src/api/SYSTEM_API_README.md`를 참고하세요. 
+### 개발자 문서
+- **[개요 및 시작 가이드](./docs/overview/README.md)** - 프로젝트 소개 및 기본 사용법
+- **[API 문서](./docs/api/README.md)** - 상세한 API 명세 및 사용법
+- **[아키텍처 가이드](./docs/architecture/README.md)** - 프로젝트 구조 및 개발 가이드
+- **[배포 가이드](./docs/deployment/README.md)** - 운영 환경 배포 방법
+- **[테스트 가이드](./docs/testing/README.md)** - 테스트 코드 작성 및 실행
+
+### API 테스트 예시
+- **[다양한 언어별 API 사용 예시](./docs/api/test-examples.md)** - Python, JavaScript, Java, C#, Go, PHP 등
+
+## 🧪 테스트
+
+```bash
+# 모든 테스트 실행
+python run_tests.py
+
+# 특정 테스트 실행
+pytest tests/test_unit.py
+
+# 커버리지와 함께 실행
+pytest --cov=src --cov-report=html
+```
+
+## 🐳 Docker 배포
+
+```bash
+# Docker 이미지 빌드 및 실행
+docker-compose up --build
+
+# 백그라운드 실행
+docker-compose up -d
+
+# 서비스 상태 확인
+docker-compose ps
+
+# 로그 확인
+docker-compose logs -f
+```
+
+## 🤝 기여하기
+
+프로젝트에 기여하고 싶으시다면:
+
+1. 이슈를 생성하여 개선사항을 제안
+2. Fork 후 Pull Request 생성
+3. 테스트 코드 작성 및 실행
+4. 코드 리뷰 참여
+
+## 📞 지원
+
+- **문서**: [docs/](./docs/) 폴더의 상세한 개발자 문서 참조
+- **이슈**: GitHub Issues를 통해 버그 리포트 및 기능 요청
+- **토론**: GitHub Discussions를 통한 질문 및 토론
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
