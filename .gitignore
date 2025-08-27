@@ -24,3 +24,12 @@ Thumbs.db
 # 로그
 logs/
 *.log
+
+# Claude AI related files
+CLAUDE.md
+claude.md
+*CLAUDE.md
+*claude.md
+.claude/
+claude-*
+*claude*
