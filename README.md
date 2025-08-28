@@ -84,7 +84,7 @@ docker-compose up --build
 import requests
 
 response = requests.post("http://localhost:5601/api/v1/chat", json={
-    "session_id": "test_session",
+    "request_id": "test_session",
     "user_message": "안녕하세요! 파이썬에 대해 알려주세요.",
     "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
     "max_tokens": 1000,
@@ -100,7 +100,7 @@ print(result['response_text'])
 
 ```python
 response = requests.post("http://localhost:5601/api/v1/chat", json={
-    "session_id": "test_session",
+    "request_id": "test_session",
     "user_message": "파이썬에 대해 알려주세요",
     "openai_api_key": "sk-your-api-key",
     "free_mode": True

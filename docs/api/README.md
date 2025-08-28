@@ -20,7 +20,7 @@ AI와 채팅하는 메인 엔드포인트입니다.
 
 ```json
 {
-  "session_id": "session-123",
+  "request_id": "session-123",
   "system_message": "당신은 친근한 AI 어시스턴트입니다.",
   "user_message": "안녕하세요!",
   "role": "당신은 프로그래밍 전문가입니다.",
@@ -45,7 +45,7 @@ AI와 채팅하는 메인 엔드포인트입니다.
 
 | 필드 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
-| `session_id` | string | ❌ | "" | 세션 식별자 |
+| `request_id` | string | ❌ | "" | 세션 식별자 |
 | `system_message` | string | ❌ | "" | 시스템 메시지 |
 | `user_message` | string | ✅ | "" | 사용자 메시지 |
 | `role` | string | ❌ | "" | AI 역할 설정 |
@@ -76,7 +76,7 @@ AI와 채팅하는 메인 엔드포인트입니다.
 {
   "success": true,
   "response_text": "안녕하세요! 무엇을 도와드릴까요?",
-  "session_id": "session-123",
+  "request_id": "session-123",
   "response_time": 2.34,
   "api_key_source": "default",
   "model_used": "gpt-4o-mini",
@@ -95,7 +95,7 @@ AI와 채팅하는 메인 엔드포인트입니다.
 |------|------|------|
 | `success` | boolean | 요청 성공 여부 |
 | `response_text` | string | AI 응답 텍스트 |
-| `session_id` | string | 세션 식별자 |
+| `request_id` | string | 세션 식별자 |
 | `response_time` | float | 응답 시간 (초) |
 | `api_key_source` | string | 사용된 API Key 소스 ("default" 또는 "user_provided") |
 | `model_used` | string | 사용된 모델명 |
@@ -158,7 +158,7 @@ data = {
 {
   "success": false,
   "response_text": null,
-  "session_id": "session-123",
+  "request_id": "session-123",
   "response_time": 0.0,
   "api_key_source": null,
   "model_used": null,

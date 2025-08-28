@@ -67,7 +67,7 @@ FastAPI 라우터를 통해 HTTP 요청을 처리합니다.
 #### ChatRequest (요청 DTO)
 ```python
 class ChatRequest(BaseModel):
-    session_id: Optional[str] = ""
+    request_id: Optional[str] = ""
     system_message: Optional[str] = ""
     user_message: Optional[str] = ""
     role: Optional[str] = ""
@@ -86,7 +86,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     success: bool
     response_text: Optional[str] = None
-    session_id: Optional[str] = None
+    request_id: Optional[str] = None
     response_time: float = 0.0
     api_key_source: Optional[str] = None
     model_used: Optional[str] = None

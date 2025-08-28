@@ -177,7 +177,7 @@ class ChatService:
             # 응답 생성
             response = ChatResponse.from_openai_response(
                 openai_response=openai_response,
-                session_id=request.request_id,
+                request_id=request.request_id,
                 response_time=response_time,
                 use_user_api_key=use_user_api_key,
                 cost=cost
@@ -255,7 +255,7 @@ class ChatService:
             # 응답 생성
             response = ChatResponse.from_openai_response(
                 openai_response=openai_response,
-                session_id=request.request_id,
+                request_id=request.request_id,
                 response_time=response_time,
                 use_user_api_key=use_user_api_key,
                 cost=cost

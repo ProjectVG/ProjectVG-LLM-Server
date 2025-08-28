@@ -18,7 +18,7 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 
 ```json
 {
-  "session_id": "string",
+  "request_id": "string",
   "system_message": "string",
   "user_message": "string",
   "role": "string",
@@ -37,7 +37,7 @@ AI와의 채팅을 수행하는 메인 엔드포인트입니다.
 
 | 필드 | 타입 | 필수 | 기본값 | 설명 |
 |------|------|------|--------|------|
-| `session_id` | string | X | "" | 세션 ID |
+| `request_id` | string | X | "" | 세션 ID |
 | `system_message` | string | X | "" | 추가 시스템 프롬프트 메시지 |
 | `user_message` | string | O | - | 사용자 입력 메시지 |
 | `role` | string | X | "" | AI 역할 설정 (시스템 프롬프트에 포함) |
@@ -81,7 +81,7 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 
 ```json
 {
-  "session_id": "string",
+  "request_id": "string",
   "response_text": "string",
   "model": "string",
   "input_tokens": 0,
@@ -102,7 +102,7 @@ conversation_history 배열의 각 항목은 `"role:content"` 형태의 문자�
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `session_id` | string | 세션 ID |
+| `request_id` | string | 세션 ID |
 | `response_text` | string | AI 응답 텍스트 |
 | `model` | string | 사용된 OpenAI 모델명 |
 | `input_tokens` | int | 입력 토큰 수 |
@@ -166,7 +166,7 @@ API는 체계적인 예외 처리 시스템을 사용하며, 다음과 같은 �
 
 ```json
 {
-  "session_id": "string",
+  "request_id": "string",
   "response_text": "",
   "model": "",
   "input_tokens": 0,
@@ -209,7 +209,7 @@ const axios = require('axios');
 async function chatWithAI(sessionId, userMessage, apiKey = null, freeMode = false) {
   try {
     const response = await axios.post('http://localhost:5601/api/v1/chat', {
-      session_id: sessionId,
+      request_id: sessionId,
       system_message: '친근하게 대화해주세요',
       user_message: userMessage,
       role: '당신은 친근하고 유머러스한 AI 어시스턴트입니다.',
@@ -255,9 +255,9 @@ chatWithAI(sessionId, '파이썬에 대해 알려주세요', apiKey, true)
 ```python
 import requests
 
-def chat_with_ai(session_id, user_message, api_key=None, free_mode=False):
+def chat_with_ai(request_id, user_message, api_key=None, free_mode=False):
     payload = {
-        'session_id': session_id,
+        'request_id': request_id,
         'system_message': '친근하게 대화해주세요',
         'user_message': user_message,
         'role': '당신은 친근하고 유머러스한 AI 어시스턴트입니다.',
@@ -278,11 +278,11 @@ def chat_with_ai(session_id, user_message, api_key=None, free_mode=False):
         return None
 
 # 사용 예시
-session_id = 'session_123'
+request_id = 'session_123'
 api_key = 'sk-your-openai-api-key'  # 선택사항
 
 # Free 모드 사용
-result = chat_with_ai(session_id, '파이썬에 대해 알려주세요', api_key, True)
+result = chat_with_ai(request_id, '파이썬에 대해 알려주세요', api_key, True)
 if result and result.get('success'):
     print('AI Response:', result['response_text'])
     print('Token Usage:', result['total_tokens_used'])
@@ -297,7 +297,7 @@ else:
 curl -X POST "http://localhost:5601/api/v1/chat" \
   -H "Content-Type: application/json" \
   -d '{
-    "session_id": "session_123",
+    "request_id": "session_123",
     "user_message": "파이썬에 대해 알려주세요",
     "role": "당신은 친근하고 유머러스한 AI 어시스턴트입니다.",
     "instructions": "간결하고 명확하게 답변해주세요",
