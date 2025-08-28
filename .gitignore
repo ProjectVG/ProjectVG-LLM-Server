@@ -33,3 +33,5 @@ claude.md
 .claude/
 claude-*
 *claude*
+
+docker-compose.yml
