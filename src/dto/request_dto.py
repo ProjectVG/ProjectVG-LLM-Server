@@ -1,52 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
+class History(BaseModel):
+    """대화 기록 데이터 타입"""
+    role: str       = Field(description="메시지 역할 (user, assistant, system)")
+    content: str    = Field(description="메시지 내용")
+
+
 class ChatRequest(BaseModel):
-    """채팅 요청 데이터 전송 객체"""
-    session_id: Optional[str] = ""
-    system_message: Optional[str] = ""
-    user_message: Optional[str] = ""
-    role: Optional[str] = ""
-    instructions: Optional[str] = ""
-    conversation_history: Optional[List[str]] = []
-    memory_context: Optional[List[str]] = []
-    max_tokens: Optional[int] = 1000
-    temperature: Optional[float] = 0.7
-    model: Optional[str] = "gpt-4o-mini"
-    openai_api_key: Optional[str] = ""
-    use_user_api_key: Optional[bool] = False
-    
-    def get_system_message(self) -> str:
-        """시스템 메시지를 조합하여 반환"""
-        system_prompt = f"""
-{self.system_message}
-
-{self._format_role()}
-
-{self._format_memory()}
-
-{self._format_instructions()}
-        """
-        return system_prompt.strip()
-    
-    def _format_role(self) -> str:
-        """역할 설정을 포맷팅"""
-        if self.role:
-            return f"#역할\n{self.role}\n"
-        return ""
-    
-    def _format_memory(self) -> str:
-        """기억 리스트를 포맷팅"""
-        if self.memory_context:
-            memory_text = "#기억\n"
-            for mem in self.memory_context:
-                memory_text += f"- {mem}\n"
-            return memory_text
-        return ""
-    
-    def _format_instructions(self) -> str:
-        """추가 지시사항을 포맷팅"""
-        if self.instructions:
-            return f"#추가 지시사항\n{self.instructions}\n"
-        return "" 
+    """채팅 요청 DTO"""
+    request_id: Optional[str]           = Field(default="", description="요청 ID")
+    system_prompt: Optional[str]        = Field(default="", description="시스템 프롬프트")
+    user_prompt: Optional[str]          = Field(default="", description="사용자 메시지")
+    instructions: Optional[str]         = Field(default="", description="추가 지시사항")
+    conversation_history: Optional[List[History]] = Field(default_factory=list, description="대화 기록")
+    max_tokens: Optional[int]           = Field(default=1000, description="최대 토큰 수")
+    temperature: Optional[float]        = Field(default=0.7, ge=0.0, le=2.0, description="응답 다양성 (0.0-2.0)")
+    model: Optional[str]                = Field(default="gpt-4o-mini", description="사용할 OpenAI 모델")
+    openai_api_key: Optional[str]       = Field(default="", description="사용자 제공 API Key")
+    use_user_api_key: Optional[bool]    = Field(default=False, description="사용자 API Key 사용 여부")

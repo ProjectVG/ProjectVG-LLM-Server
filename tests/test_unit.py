@@ -41,11 +41,11 @@ class TestUnit(unittest.TestCase):
         from src.dto.request_dto import ChatRequest
         
         request = ChatRequest(
-            user_message="안녕하세요",
+            user_prompt="안녕하세요",
             max_tokens=get_test_max_tokens(),
         )
         
-        print(f"프롬프트: {request.user_message}")
+        print(f"프롬프트: {request.user_prompt}")
         
         response = self.chat_service.process_chat_request(request)
         
@@ -68,11 +68,11 @@ class TestUnit(unittest.TestCase):
         from src.dto.request_dto import ChatRequest
         
         request = ChatRequest(
-            user_message="안녕하세요",
+            user_prompt="안녕하세요",
             max_tokens=get_test_max_tokens(),
         )
         
-        print(f"프롬프트: {request.user_message}")
+        print(f"프롬프트: {request.user_prompt}")
         
         response = self.chat_service.process_chat_request(request)
         
@@ -89,18 +89,18 @@ class TestUnit(unittest.TestCase):
         print("\n4. 메모리 매개변수 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.dto.request_dto import ChatRoleRequest
         
-        request = ChatRequest(
-            user_message="메모리에 뭐가 있어?",
+        request = ChatRoleRequest(
+            user_prompt="메모리에 뭐가 있어?",
             memory_context=["테스트 메모리"],
             max_tokens=get_test_max_tokens(),
         )
         
         print(f"메모리: {request.memory_context}")
-        print(f"프롬프트: {request.user_message}")
+        print(f"프롬프트: {request.user_prompt}")
         
-        response = self.chat_service.process_chat_request(request)
+        response = self.chat_service.process_chat_role_request(request)
         
         print(f"응답: {response.response_text}")
         print(f"응답 시간: {response.response_time:.2f}초")
@@ -119,13 +119,13 @@ class TestUnit(unittest.TestCase):
         from src.dto.request_dto import ChatRequest
         
         request = ChatRequest(
-            user_message="파이썬이 뭐야?",
+            user_prompt="파이썬이 뭐야?",
             instructions="한 문장으로 답해주세요.",
             max_tokens=get_test_max_tokens(),
         )
         
         print(f"지시사항: {request.instructions}")
-        print(f"프롬프트: {request.user_message}")
+        print(f"프롬프트: {request.user_prompt}")
         
         response = self.chat_service.process_chat_request(request)
         
@@ -146,11 +146,11 @@ class TestUnit(unittest.TestCase):
         from src.dto.request_dto import ChatRequest
         
         request = ChatRequest(
-            user_message="파이썬의 모든 특징과 장점을 자세히 설명해주세요. 가능한 한 길고 상세하게 설명해주세요.",
+            user_prompt="파이썬의 모든 특징과 장점을 자세히 설명해주세요. 가능한 한 길고 상세하게 설명해주세요.",
             max_tokens=16,  # OpenAI API 최소값
         )
         
-        print(f"프롬프트: {request.user_message}")
+        print(f"프롬프트: {request.user_prompt}")
         print(f"MAX_TOKEN 제한: {request.max_tokens}")
         
         response = self.chat_service.process_chat_request(request)
@@ -174,7 +174,7 @@ class TestUnit(unittest.TestCase):
         
         # 테스트에서는 기본 API Key 사용
         request = ChatRequest(
-            user_message="안녕하세요",
+            user_prompt="안녕하세요",
             max_tokens=get_test_max_tokens(),
         )
         
@@ -194,7 +194,7 @@ class TestUnit(unittest.TestCase):
         from src.dto.request_dto import ChatRequest
         
         request = ChatRequest(
-            user_message="안녕하세요",
+            user_prompt="안녕하세요",
             max_tokens=get_test_max_tokens(),
         )
         

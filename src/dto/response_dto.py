@@ -1,111 +1,175 @@
 from datetime import datetime
-from dataclasses import dataclass
+from pydantic import BaseModel, Field
 from typing import Optional
 import time
 
 
-@dataclass
-class ChatResponse:
-    """사용자 정의 채팅 응답 데이터 클래스"""
+class ChatResponse(BaseModel):
+    """채팅 응답 데이터 클래스 (OpenAI Response 구조 기반)"""
     
-    # 기본 응답 정보
-    session_id: str
-    response_text: str
-    model: str
+    # OpenAI Response 기본 정보
+    id: str                 = Field(description="OpenAI Response ID")
+    request_id: str         = Field(description="세션 ID")
+    object: str             = Field(default="response", description="응답 객체 타입")
+    created_at: int         = Field(default_factory=lambda: int(time.time()), description="생성 시간 (Unix timestamp)")
+    status: str             = Field(default="completed", description="응답 상태 (completed, failed)")
+    model: str              = Field(default="gpt-4o-mini", description="사용된 OpenAI 모델")
     
-    # 토큰 사용량
-    input_tokens: int
-    output_tokens: int
-    total_tokens_used: int
+    # 응답 텍스트
+    output_text: str        = Field(default="", description="AI 응답 텍스트")
     
-    # 출력 형식
-    output_format: str
+    # 토큰 사용량 정보
+    input_tokens: int       = Field(default=0, ge=0, description="입력 토큰 수")
+    output_tokens: int      = Field(default=0, ge=0, description="출력 토큰 수")
+    total_tokens: int       = Field(default=0, ge=0, description="총 토큰 수")
+    cached_tokens: int      = Field(default=0, ge=0, description="캐시된 토큰 수")
+    reasoning_tokens: int   = Field(default=0, ge=0, description="추론 토큰 수 (o-series)")
     
-    # 생성 시간
-    created_at: datetime
+    # 응답 형식
+    text_format_type: str   = Field(default="text", description="텍스트 형식 타입")
     
-    # 추가 메타데이터
-    temperature: Optional[float] = None
-    instructions: Optional[str] = None
+    # 비용 정보 (밀리센트 단위)
+    cost: Optional[int]     = Field(default=None, ge=0, description="계산된 비용 (밀리센트)")
     
-    # 응답 시간 (초)
-    response_time: Optional[float] = None
+    # 성능 측정
+    response_time: Optional[float] = Field(default=None, ge=0.0, description="응답 시간 (초)")
     
-    # 성공/실패 상태
-    success: bool = True
-    error_message: Optional[str] = None
+    # 상태 정보
+    success: bool           = Field(default=True, description="성공 여부")
+    error: Optional[str]    = Field(default=None, description="에러 메시지")
+    use_user_api_key: bool  = Field(default=False, description="사용자 API Key 사용 여부")
     
-    # API Key 사용 정보
-    api_key_source: Optional[str] = None
+    class Config:
+        """Pydantic 설정"""
+        # JSON 스키마 생성 시 예시 값 제공
+        schema_extra = {
+            "example": {
+                "id": "resp_12345",
+                "request_id": "sess_67890",
+                "object": "response",
+                "created_at": 1641234567,
+                "status": "completed",
+                "model": "gpt-4o-mini",
+                "output_text": "안녕하세요! 도움이 필요하시면 언제든 말씀해 주세요.",
+                "input_tokens": 15,
+                "output_tokens": 20,
+                "total_tokens": 35,
+                "cached_tokens": 0,
+                "reasoning_tokens": 0,
+                "text_format_type": "text",
+                "cost": 42,
+                "response_time": 1.23,
+                "success": True,
+                "error": None,
+                "use_user_api_key": False
+            }
+        }
     
     def print_response_info(self):
         """응답 정보 출력"""
+        created_datetime = datetime.fromtimestamp(self.created_at)
         print(f"""
 ==== Chat Response Information ====
-Session ID: {self.session_id}
+ID:         {self.id}
+Request ID: {self.request_id}
+Status:     {self.status}
 Model:      {self.model}
 Output:
-    Response:   {self.response_text}
-    Format:     {self.output_format}
+    Response:   {self.output_text}
+    Format:     {self.text_format_type}
 Token Usage:
     Input Tokens: {self.input_tokens}     Output Tokens: {self.output_tokens}
-    Total Tokens: {self.total_tokens_used}
-Response Time: {self.response_time:.2f}s
-Created At: {self.created_at.strftime("%Y-%m-%d %H:%M:%S")}
+    Cached Tokens: {self.cached_tokens}   Reasoning Tokens: {self.reasoning_tokens}
+    Total Tokens: {self.total_tokens}
+Cost: {self.cost} 밀리센트 if self.cost else 'N/A'
+Response Time: {self.response_time:.2f}s if self.response_time else 'N/A'
+Created At: {created_datetime.strftime("%Y-%m-%d %H:%M:%S")}
 Success: {self.success}
-API Key Source: {self.api_key_source}
+User API Key: {self.use_user_api_key}
         """)
     
     def to_dict(self) -> dict:
         """딕셔너리로 변환"""
         return {
-            "session_id": self.session_id,
-            "response_text": self.response_text,
+            "id": self.id,
+            "request_id": self.request_id,
+            "object": self.object,
+            "created_at": self.created_at,
+            "status": self.status,
             "model": self.model,
+            "output_text": self.output_text,
             "input_tokens": self.input_tokens,
             "output_tokens": self.output_tokens,
-            "total_tokens_used": self.total_tokens_used,
-            "output_format": self.output_format,
-            "created_at": self.created_at.isoformat(),
-            "temperature": self.temperature,
-            "instructions": self.instructions,
+            "total_tokens": self.total_tokens,
+            "cached_tokens": self.cached_tokens,
+            "reasoning_tokens": self.reasoning_tokens,
+            "text_format_type": self.text_format_type,
+            "cost": self.cost,
             "response_time": self.response_time,
             "success": self.success,
-            "error_message": self.error_message,
-            "api_key_source": self.api_key_source
+            "error": self.error,
+            "use_user_api_key": self.use_user_api_key
         }
     
     @classmethod
-    def from_openai_response(cls, openai_response, session_id: str = "", response_time: float = None, api_key_source: str = None):
+    def from_openai_response(cls, openai_response, request_id: str = "", response_time: float = None, use_user_api_key: bool = False, cost: int = None):
         """OpenAI Response에서 ChatResponse 생성"""
+        # 사용자 API Key 사용 시 비용 측정을 위해 토큰을 0으로 설정
+        if use_user_api_key:
+            input_tokens = 0
+            output_tokens = 0
+            total_tokens = 0
+            cached_tokens = 0
+            reasoning_tokens = 0
+        else:
+            input_tokens = openai_response.usage.input_tokens
+            output_tokens = openai_response.usage.output_tokens
+            total_tokens = openai_response.usage.total_tokens
+            # 새로운 토큰 세부 정보 추출
+            cached_tokens = getattr(openai_response.usage, 'input_tokens_details', {}).get('cached_tokens', 0)
+            reasoning_tokens = getattr(openai_response.usage, 'output_tokens_details', {}).get('reasoning_tokens', 0)
+            
         return cls(
-            session_id=session_id,
-            response_text=openai_response.output_text,
+            id=openai_response.id,
+            request_id=request_id,
+            object=openai_response.object,
+            created_at=openai_response.created_at,
+            status=openai_response.status,
             model=openai_response.model,
-            input_tokens=openai_response.usage.input_tokens,
-            output_tokens=openai_response.usage.output_tokens,
-            total_tokens_used=openai_response.usage.total_tokens,
-            output_format=openai_response.text.format.type,
-            created_at=datetime.fromtimestamp(openai_response.created_at),
-            temperature=openai_response.temperature,
+            output_text=openai_response.output_text,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
+            cached_tokens=cached_tokens,
+            reasoning_tokens=reasoning_tokens,
+            text_format_type=openai_response.text.format.type,
+            cost=cost,
             response_time=response_time,
             success=True,
-            api_key_source=api_key_source
+            use_user_api_key=use_user_api_key
         )
     
     @classmethod
-    def create_error_response(cls, session_id: str, error_message: str):
+    def create_error_response(cls, request_id: str, error_message: str):
         """에러 응답 생성"""
+        current_timestamp = int(time.time())
         return cls(
-            session_id=session_id,
-            response_text="",
+            id="",
+            request_id=request_id,
+            object="response",
+            created_at=current_timestamp,
+            status="failed",
             model="",
+            output_text="",
             input_tokens=0,
             output_tokens=0,
-            total_tokens_used=0,
-            output_format="",
-            created_at=datetime.now(),
+            total_tokens=0,
+            cached_tokens=0,
+            reasoning_tokens=0,
+            text_format_type="text",
+            cost=0,
             response_time=0.0,
             success=False,
-            error_message=error_message
+            error=error_message,
+            use_user_api_key=False
         ) 
