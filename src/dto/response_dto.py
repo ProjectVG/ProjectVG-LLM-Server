@@ -125,9 +125,18 @@ User API Key: {self.use_user_api_key}
             input_tokens = openai_response.usage.input_tokens
             output_tokens = openai_response.usage.output_tokens
             total_tokens = openai_response.usage.total_tokens
-            # 새로운 토큰 세부 정보 추출
-            cached_tokens = getattr(openai_response.usage, 'input_tokens_details', {}).get('cached_tokens', 0)
-            reasoning_tokens = getattr(openai_response.usage, 'output_tokens_details', {}).get('reasoning_tokens', 0)
+            # 새로운 토큰 세부 정보 추출 - 안전한 방식으로 처리
+            cached_tokens = 0
+            if hasattr(openai_response.usage, 'input_tokens_details'):
+                input_tokens_details = openai_response.usage.input_tokens_details
+                if input_tokens_details and hasattr(input_tokens_details, 'cached_tokens'):
+                    cached_tokens = getattr(input_tokens_details, 'cached_tokens', 0)
+            
+            reasoning_tokens = 0
+            if hasattr(openai_response.usage, 'output_tokens_details'):
+                output_tokens_details = openai_response.usage.output_tokens_details
+                if output_tokens_details and hasattr(output_tokens_details, 'reasoning_tokens'):
+                    reasoning_tokens = getattr(output_tokens_details, 'reasoning_tokens', 0)
             
         return cls(
             id=openai_response.id,

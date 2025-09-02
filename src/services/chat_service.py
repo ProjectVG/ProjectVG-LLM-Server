@@ -5,6 +5,7 @@ from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
 from src.utils.cost_calculator import LLMCostCalculator
 from src.config import config
+from openai.types.responses import Response
 from src.exceptions.chat_exceptions import (
     ChatServiceException,
     OpenAIClientException,
@@ -45,7 +46,7 @@ class ChatService:
         else:
             raise ConfigurationException("사용 가능한 API Key가 없습니다.", config_key="OPENAI_API_KEY")
     
-    def _calculate_cost(self, openai_response, use_user_api_key: bool = False) -> int:
+    def _calculate_cost(self, openai_response: Response, use_user_api_key: bool = False) -> int:
         """
         OpenAI 응답을 기반으로 비용 계산 (고성능 최적화 버전)
         
@@ -58,15 +59,22 @@ class ChatService:
         """
         if use_user_api_key:
             return 0
-        
         try:
-            # 토큰 정보 추출
-            input_tokens = openai_response.usage.input_tokens
-            output_tokens = openai_response.usage.output_tokens
-            cached_tokens = getattr(openai_response.usage, 'input_tokens_details', {}).get('cached_tokens', 0)
-            reasoning_tokens = getattr(openai_response.usage, 'output_tokens_details', {}).get('reasoning_tokens', 0)
+            input_tokens = getattr(openai_response.usage, 'input_tokens', 0)
+            output_tokens = getattr(openai_response.usage, 'output_tokens', 0)
             
-            # 고성능 비용 계산 (O(1), 정수 연산만 사용)
+            cached_tokens = 0
+            if hasattr(openai_response.usage, 'input_tokens_details'):
+                input_tokens_details = openai_response.usage.input_tokens_details
+                if input_tokens_details and hasattr(input_tokens_details, 'cached_tokens'):
+                    cached_tokens = getattr(input_tokens_details, 'cached_tokens', 0)
+            
+            reasoning_tokens = 0
+            if hasattr(openai_response.usage, 'output_tokens_details'):
+                output_tokens_details = openai_response.usage.output_tokens_details
+                if output_tokens_details and hasattr(output_tokens_details, 'reasoning_tokens'):
+                    reasoning_tokens = getattr(output_tokens_details, 'reasoning_tokens', 0)
+            
             cost = LLMCostCalculator.calculate_cost(
                 model=openai_response.model,
                 input_tokens=input_tokens,
@@ -82,11 +90,11 @@ class ChatService:
             logger.warning(f"비용 계산 중 오류 발생: {str(e)}, 기본값 0 사용")
             return 0
     
-    def _create_system_message(self, request) -> dict:
+    def _create_system_message(self, request: ChatRequest) -> dict:
         """시스템 메시지 생성"""
         return {
             "role": "system",
-            "content": request.get_system_message()
+            "content": request.system_prompt
         }
     
     def _create_user_message(self, user_prompt: str) -> dict:
@@ -96,7 +104,7 @@ class ChatService:
         }
 
     
-    def _validate_request(self, request) -> None:
+    def _validate_request(self, request: ChatRequest) -> None:
         """요청 데이터 검증"""
         user_prompt = getattr(request, 'user_prompt', None)
         if not user_prompt or user_prompt.strip() == "":
