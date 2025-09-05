@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirement.txt
 COPY . .
 
 # 기본 포트 환경변수
-ENV SERVER_PORT=5601
+ENV SERVER_PORT=8080
 ENV SERVER_HOST=0.0.0.0
 
 # FastAPI 서버 실행 (uvicorn)
