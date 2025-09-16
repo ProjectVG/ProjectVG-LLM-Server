@@ -5,7 +5,7 @@ from pathlib import Path
 class Config:
     """설정 관리 클래스"""
     
-    SERVER_PORT = "5601"
+    SERVER_PORT = "8080"
     OPENAI_API_KEY = ""
     LOG_LEVEL = "INFO"
     LOG_FILE = "logs/app.log"
