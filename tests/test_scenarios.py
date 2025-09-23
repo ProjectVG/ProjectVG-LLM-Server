@@ -7,7 +7,7 @@
 
 import unittest
 from src.services.chat_service import ChatService
-from src.dto.request_dto import ChatRequest, ChatRoleRequest, History
+from src.models.request_dto import ChatRequest, ChatRoleRequest, History
 from src.exceptions.chat_exceptions import ValidationException, OpenAIClientException
 from tests.test_input import get_test_max_tokens
 

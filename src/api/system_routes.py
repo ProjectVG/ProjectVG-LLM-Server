@@ -4,7 +4,7 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-system_router = APIRouter(prefix="/api/v1/system", tags=["system"])
+system_router = APIRouter(prefix="/api/v1", tags=["system"])
 
 @system_router.get("/health")
 async def health_check():

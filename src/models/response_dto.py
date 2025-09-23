@@ -42,7 +42,7 @@ class ChatResponse(BaseModel):
     class Config:
         """Pydantic 설정"""
         # JSON 스키마 생성 시 예시 값 제공
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": "resp_12345",
                 "request_id": "sess_67890",

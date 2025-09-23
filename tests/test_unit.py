@@ -38,7 +38,7 @@ class TestUnit(unittest.TestCase):
         print("\n2. 단순 채팅 요청 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         request = ChatRequest(
             user_prompt="안녕하세요",
@@ -65,7 +65,7 @@ class TestUnit(unittest.TestCase):
         print("\n3. 응답 시간 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         request = ChatRequest(
             user_prompt="안녕하세요",
@@ -89,7 +89,7 @@ class TestUnit(unittest.TestCase):
         print("\n4. 메모리 매개변수 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRoleRequest
+        from src.models.request_dto import ChatRoleRequest
         
         request = ChatRoleRequest(
             user_prompt="메모리에 뭐가 있어?",
@@ -116,7 +116,7 @@ class TestUnit(unittest.TestCase):
         print("\n5. 지시사항 매개변수 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         request = ChatRequest(
             user_prompt="파이썬이 뭐야?",
@@ -143,7 +143,7 @@ class TestUnit(unittest.TestCase):
         print("\n6. MAX_TOKEN 제한 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         request = ChatRequest(
             user_prompt="파이썬의 모든 특징과 장점을 자세히 설명해주세요. 가능한 한 길고 상세하게 설명해주세요.",
@@ -170,7 +170,7 @@ class TestUnit(unittest.TestCase):
         print("\n7. API Key 기능 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         # 테스트에서는 기본 API Key 사용
         request = ChatRequest(
@@ -191,7 +191,7 @@ class TestUnit(unittest.TestCase):
         print("\n8. 사용자 API Key 기능 테스트")
         print("-" * 40)
         
-        from src.dto.request_dto import ChatRequest
+        from src.models.request_dto import ChatRequest
         
         request = ChatRequest(
             user_prompt="안녕하세요",

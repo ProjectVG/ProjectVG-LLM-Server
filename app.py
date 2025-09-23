@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import router
 from src.api.system_routes import system_router
 from src.api.exception_handlers import (
@@ -15,7 +16,7 @@ from src.exceptions.chat_exceptions import (
     ConfigurationException
 )
 from src.utils.logger import setup_logging, get_logger, get_uvicorn_custom_log
-from src.config.config import SERVER_PORT, SERVER_HOST
+from src.config.config import SERVER_PORT, SERVER_HOST, settings
 import uvicorn
 
 # 로깅 설정
@@ -26,6 +27,15 @@ app = FastAPI(
     title="LLM Server API",
     description="OpenAI API를 사용한 채팅 서버",
     version="1.0.0"
+)
+
+# CORS 미들웨어 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=settings.CORS_CREDENTIALS,
+    allow_methods=settings.CORS_METHODS,
+    allow_headers=settings.CORS_HEADERS,
 )
 
 # 예외 핸들러 등록

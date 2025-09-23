@@ -1,6 +1,6 @@
 import logging
 from src.services.chat_service import ChatService
-from src.dto.request_dto import ChatRequest
+from src.models.request_dto import ChatRequest
 from src.utils.error_handler import ErrorHandler
 from src.exceptions.chat_exceptions import (
     ChatServiceException,

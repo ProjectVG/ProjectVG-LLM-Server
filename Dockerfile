@@ -10,11 +10,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 파이썬 의존성 복사 및 설치
-COPY requirement.txt .
-RUN pip install --no-cache-dir -r requirement.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 소스 코드 복사
 COPY . .
+
+# 포트 노출
+EXPOSE 8080
 
 # 기본 포트 환경변수
 ENV SERVER_PORT=8080

@@ -1,6 +1,6 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from src.dto.response_dto import ChatResponse
+from src.models.response_dto import ChatResponse
 from src.exceptions.chat_exceptions import (
     ChatServiceException,
     OpenAIClientException,

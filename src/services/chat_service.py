@@ -1,7 +1,7 @@
 import time
 from src.external.openai_client import OpenAIClient
-from src.dto.request_dto import ChatRequest, History
-from src.dto.response_dto import ChatResponse
+from src.models.request_dto import ChatRequest, History
+from src.models.response_dto import ChatResponse
 from src.utils.logger import get_logger
 from src.utils.cost_calculator import LLMCostCalculator
 from src.config.config import OPENAI_API_KEY
@@ -163,12 +163,12 @@ class ChatService:
             start_time = time.perf_counter()
             
             # OpenAI API 호출
-            openai_response = self.openai_client.create_response(
-                input_data=messages,
+            openai_response = self.openai_client.generate_response(
+                messages=messages,
                 api_key=selected_api_key,
                 model=request.model,
                 instructions=request.instructions,
-                max_output_tokens=request.max_tokens,
+                max_tokens=request.max_tokens,
                 temperature=request.temperature
             )
             

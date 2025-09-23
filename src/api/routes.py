@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from src.dto.request_dto import ChatRequest
-from src.dto.response_dto import ChatResponse
+from src.models.request_dto import ChatRequest
+from src.models.response_dto import ChatResponse
 from src.services.chat_service import ChatService
 from src.utils.logger import get_logger
 
