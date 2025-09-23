@@ -1,56 +1,55 @@
 import os
-from typing import Optional
-from pathlib import Path
 
+# 서버 설정 (Memory Server 방식에 맞춰 전역 변수로 정의)
+SERVER_PORT: int = int(os.getenv("SERVER_PORT", "8080"))
+SERVER_HOST: str = os.getenv("SERVER_HOST", "0.0.0.0")
+
+# OpenAI API 설정
+OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+DEFAULT_MODEL: str = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
+DEFAULT_TEMPERATURE: float = float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
+DEFAULT_MAX_TOKENS: int = int(os.getenv("DEFAULT_MAX_TOKENS", "1000"))
+
+# 로깅 설정
+LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+LOG_FILE: str = os.getenv("LOG_FILE", "logs/app.log")
+
+# 기존 config 객체와의 호환성을 위한 래퍼 클래스 (임시)
 class Config:
-    """설정 관리 클래스"""
-    
-    SERVER_PORT = "8080"
-    OPENAI_API_KEY = ""
-    LOG_LEVEL = "INFO"
-    LOG_FILE = "logs/app.log"
-    DEFAULT_MODEL = "gpt-4o-mini"
-    DEFAULT_TEMPERATURE = "0.7"
-    DEFAULT_MAX_TOKENS = "1000"
-    
-    def __init__(self):
-        self._load_env_file()
-        self._load_from_env()
-    
-    def _load_env_file(self):
-        """환경 변수 파일 로드"""
-        env_file = Path(".env")
-        if env_file.exists():
-            with open(env_file, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, value = line.split("=", 1)
-                        if key not in os.environ:
-                            os.environ[key] = value
-    
-    def _load_from_env(self):
-        """환경 변수에서 설정 값들을 로드"""
-        # 환경 변수가 있으면 고정 값 대신 사용
-        if os.environ.get("SERVER_PORT"):
-            self.SERVER_PORT = os.environ.get("SERVER_PORT")
-        if os.environ.get("OPENAI_API_KEY"):
-            self.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-        if os.environ.get("LOG_LEVEL"):
-            self.LOG_LEVEL = os.environ.get("LOG_LEVEL")
-        if os.environ.get("LOG_FILE"):
-            self.LOG_FILE = os.environ.get("LOG_FILE")
-        if os.environ.get("DEFAULT_MODEL"):
-            self.DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL")
-        if os.environ.get("DEFAULT_TEMPERATURE"):
-            self.DEFAULT_TEMPERATURE = os.environ.get("DEFAULT_TEMPERATURE")
-        if os.environ.get("DEFAULT_MAX_TOKENS"):
-            self.DEFAULT_MAX_TOKENS = os.environ.get("DEFAULT_MAX_TOKENS")
-    
-    def get(self, key: str, default: Optional[str] = None) -> str:
+    """하위 호환성을 위한 설정 클래스"""
+
+    @property
+    def SERVER_PORT(self) -> str:
+        return str(SERVER_PORT)
+
+    @property
+    def OPENAI_API_KEY(self) -> str:
+        return OPENAI_API_KEY
+
+    @property
+    def LOG_LEVEL(self) -> str:
+        return LOG_LEVEL
+
+    @property
+    def LOG_FILE(self) -> str:
+        return LOG_FILE
+
+    @property
+    def DEFAULT_MODEL(self) -> str:
+        return DEFAULT_MODEL
+
+    @property
+    def DEFAULT_TEMPERATURE(self) -> str:
+        return str(DEFAULT_TEMPERATURE)
+
+    @property
+    def DEFAULT_MAX_TOKENS(self) -> str:
+        return str(DEFAULT_MAX_TOKENS)
+
+    def get(self, key: str, default: str = None) -> str:
         """설정 값에서 값을 가져옴"""
         return getattr(self, key, default)
-    
+
     def get_int(self, key: str, default: int = 0) -> int:
         """설정 값에서 정수 값을 가져옴"""
         value = self.get(key)
@@ -58,7 +57,7 @@ class Config:
             return int(value) if value else default
         except (ValueError, TypeError):
             return default
-    
+
     def get_bool(self, key: str, default: bool = False) -> bool:
         """설정 값에서 불린 값을 가져옴"""
         value = str(self.get(key, "")).lower()
@@ -68,4 +67,5 @@ class Config:
             return False
         return default
 
+# 하위 호환성을 위한 인스턴스 생성
 config = Config() 

@@ -2,7 +2,7 @@ import logging
 import sys
 import os
 from typing import Optional
-from src.config import config
+from src.config.config import LOG_LEVEL, LOG_FILE
 
 
 class LoggerConfig:
@@ -62,7 +62,7 @@ def setup_logging(
     """로깅 설정"""
     # 설정에서 로그 레벨 가져오기
     if level is None:
-        log_level_str = config.get("LOG_LEVEL").upper()
+        log_level_str = LOG_LEVEL.upper()
         level_map = {
             "DEBUG": logging.DEBUG,
             "INFO": logging.INFO,
@@ -71,10 +71,10 @@ def setup_logging(
             "CRITICAL": logging.CRITICAL
         }
         level = level_map.get(log_level_str, logging.INFO)
-    
+
     # 설정에서 로그 파일 경로 가져오기
     if log_file is None:
-        log_file = config.get("LOG_FILE")
+        log_file = LOG_FILE
     
     logger_config = LoggerConfig(level, format_string, log_file)
     logger_config.configure()

@@ -15,7 +15,7 @@ from src.exceptions.chat_exceptions import (
     ConfigurationException
 )
 from src.utils.logger import setup_logging, get_logger, get_uvicorn_custom_log
-from src.config import config
+from src.config.config import SERVER_PORT, SERVER_HOST
 import uvicorn
 
 # 로깅 설정
@@ -43,16 +43,12 @@ logger = get_logger(__name__)
 
 
 if __name__ == "__main__":
-    # 설정에서 포트 가져오기
-    port = config.get_int("SERVER_PORT")
-    host = "0.0.0.0"
-    
-    logger.info(f"서버 시작 중... (Host: {host}, Port: {port})")
-    
+    logger.info(f"서버 시작 중... (Host: {SERVER_HOST}, Port: {SERVER_PORT})")
+
     uvicorn.run(
-        app, 
-        host=host, 
-        port=port,
+        app,
+        host=SERVER_HOST,
+        port=SERVER_PORT,
         log_config=get_uvicorn_custom_log(),
         access_log=True
     ) 

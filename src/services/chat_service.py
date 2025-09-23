@@ -4,7 +4,7 @@ from src.dto.request_dto import ChatRequest, History
 from src.dto.response_dto import ChatResponse
 from src.utils.logger import get_logger
 from src.utils.cost_calculator import LLMCostCalculator
-from src.config import config
+from src.config.config import OPENAI_API_KEY
 from openai.types.responses import Response
 from src.exceptions.chat_exceptions import (
     ChatServiceException,
@@ -25,10 +25,9 @@ class ChatService:
     
     def _load_default_api_key(self) -> str:
         """기본 API Key 로드"""
-        api_key = config.get("OPENAI_API_KEY")
-        if api_key:
-            logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {api_key[:4]}****")
-            return api_key
+        if OPENAI_API_KEY:
+            logger.info(f"성공적으로 OPENAI_API_KEY를 불러왔습니다: {OPENAI_API_KEY[:4]}****")
+            return OPENAI_API_KEY
         else:
             logger.warning("OPENAI_API_KEY가 설정되지 않았습니다. 사용자 API Key만 사용 가능합니다.")
             return None
